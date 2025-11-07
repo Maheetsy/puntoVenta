@@ -24,7 +24,8 @@ class AppRoutes {
   static const String sales = '/sales';
   static const String createSale = '/sales/create';
   static const String saleDetail = '/sales/detail';
-  
+
+
   // Reportes
   static const String reports = '/reports';
   

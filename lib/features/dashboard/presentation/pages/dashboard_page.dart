@@ -4,7 +4,6 @@ import '../../../../core/constants/app_routes.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/widgets/responsive_layout.dart';
-
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
 
@@ -68,7 +67,7 @@ class DashboardPage extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 24),
-          
+
           // Ventas recientes
           Text(
             AppStrings.recentSales,
@@ -76,9 +75,9 @@ class DashboardPage extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           _buildRecentSales(context),
-          
+
           const SizedBox(height: 24),
-          
+
           // Productos más vendidos
           Text(
             AppStrings.topProducts,
@@ -92,12 +91,12 @@ class DashboardPage extends StatelessWidget {
   }
 
   Widget _buildStatCard(
-    BuildContext context, {
-    required String title,
-    required String value,
-    required IconData icon,
-    required Color color,
-  }) {
+      BuildContext context, {
+        required String title,
+        required String value,
+        required IconData icon,
+        required Color color,
+      }) {
     return Card(
       elevation: 2,
       child: Padding(
@@ -203,24 +202,50 @@ class DashboardPage extends StatelessWidget {
     );
   }
 
+  // --- ⬇️ AQUÍ ESTÁ LA FUNCIÓN ACTUALIZADA ⬇️ ---
   void _navigateToPage(BuildContext context, int index) {
+    // Obtenemos la ruta actual para no recargar la misma página
+    final currentRoute = ModalRoute.of(context)?.settings.name;
+
     switch (index) {
       case 0:
-        Navigator.pushReplacementNamed(context, AppRoutes.dashboard);
+        if (currentRoute != AppRoutes.dashboard) {
+          Navigator.pushReplacementNamed(context, AppRoutes.dashboard);
+        }
         break;
       case 1:
-        Navigator.pushReplacementNamed(context, AppRoutes.products);
+        if (currentRoute != AppRoutes.products) {
+          Navigator.pushReplacementNamed(context, AppRoutes.products);
+        }
         break;
       case 2:
-        Navigator.pushReplacementNamed(context, AppRoutes.categories);
+        if (currentRoute != AppRoutes.categories) {
+          Navigator.pushReplacementNamed(context, AppRoutes.categories);
+        }
         break;
       case 3:
-        Navigator.pushReplacementNamed(context, AppRoutes.sales);
+        if (currentRoute != AppRoutes.sales) {
+          Navigator.pushReplacementNamed(context, AppRoutes.sales);
+        }
         break;
       case 4:
-        Navigator.pushReplacementNamed(context, AppRoutes.clients);
+        if (currentRoute != AppRoutes.clients) {
+          Navigator.pushReplacementNamed(context, AppRoutes.clients);
+        }
         break;
+
+    // ---------- CAMBIOS AGREGADOS ----------
+      case 5: // Este será "Reportes"
+        if (currentRoute != AppRoutes.reports) {
+          Navigator.pushReplacementNamed(context, AppRoutes.reports);
+        }
+        break;
+      case 6: // Este será "Configuración"
+        if (currentRoute != AppRoutes.settings) {
+          Navigator.pushReplacementNamed(context, AppRoutes.settings);
+        }
+        break;
+    // ----------------------------------------
     }
   }
 }
-
