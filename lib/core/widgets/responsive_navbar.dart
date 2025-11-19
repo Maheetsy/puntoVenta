@@ -17,7 +17,7 @@ class ResponsiveNavbar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isMobile = MediaQuery.of(context).size.width < 768;
-    
+
     if (isMobile) {
       return _buildMobileNavbar(context);
     } else {
@@ -78,12 +78,12 @@ class ResponsiveNavbar extends StatelessWidget {
               children: [
                 Image.asset(
                   'assets/images/icono.png',
-                  width: 48,
-                  height: 48,
+                  width: 90,
+                  height: 90,
                   errorBuilder: (context, error, stackTrace) {
                     return const Icon(
                       Icons.point_of_sale,
-                      size: 48,
+                      size: 90,
                       color: Colors.white,
                     );
                   },
@@ -155,7 +155,7 @@ class ResponsiveNavbar extends StatelessWidget {
     required int index,
   }) {
     final isSelected = currentIndex == index;
-    
+
     return ListTile(
       leading: Icon(
         icon,
@@ -177,4 +177,3 @@ class ResponsiveNavbar extends StatelessWidget {
     );
   }
 }
-

@@ -39,8 +39,8 @@ class ResponsiveLayout extends StatelessWidget {
           padding: const EdgeInsets.only(right: 8),
           child: Image.asset(
             'assets/images/icono.png',
-            width: 32,
-            height: 32,
+            width: 80,
+            height: 80,
             errorBuilder: (context, error, stackTrace) {
               return const SizedBox.shrink();
             },

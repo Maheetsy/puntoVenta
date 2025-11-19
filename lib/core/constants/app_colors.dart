@@ -3,14 +3,9 @@ import 'package:flutter/material.dart';
 class AppColors {
   // Constructor privado para evitar instanciación
   AppColors._();
-
-  // ============== COLORES BASE ==============
-
-  // Backgrounds
-  static const Color background = Color(0xFFEAF4F4); // #EAF4F4
-  static const Color backgroundSecondary = Color(0xFFC0D6DF); // #C0D6DF
-  static const Color cardBackground = Color(0xFFA2D6F9); // #A2D6F9
-
+  static const Color background = Color.fromARGB(255, 251, 254, 255);
+  static const Color backgroundSecondary = Color(0xFFE6F7FF);
+  static const Color cardBackground = Color.fromARGB(255, 202, 234, 255);
   // Primary (Azul) - #1B98E0 y #1E96FC para botones
   static const Color primary = Color(0xFF1B98E0); // #1B98E0
   static const Color primaryLight = Color(0xFF1E96FC); // #1E96FC

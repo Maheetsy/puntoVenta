@@ -88,4 +88,3 @@ class CustomButton extends StatelessWidget {
     return Text(text, style: AppTextStyles.labelLarge);
   }
 }
-
