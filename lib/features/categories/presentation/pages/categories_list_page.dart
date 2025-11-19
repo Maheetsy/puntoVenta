@@ -4,6 +4,9 @@ import '../../../../core/constants/app_routes.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/widgets/responsive_layout.dart';
+import '../../../../core/errors/exceptions.dart';
+import '../../../../config/di/injection_container.dart';
+import '../../domain/entities/category.dart';
 import 'category_form_page.dart';
 
 class CategoriesListPage extends StatefulWidget {
@@ -15,9 +18,11 @@ class CategoriesListPage extends StatefulWidget {
 
 class _CategoriesListPageState extends State<CategoriesListPage> {
   final TextEditingController _searchController = TextEditingController();
-  List<Map<String, dynamic>> _categories = [];
-  List<Map<String, dynamic>> _filteredCategories = [];
+  final _categoryRepository = injectionContainer.categoryRepository;
+  List<Category> _categories = [];
+  List<Category> _filteredCategories = [];
   bool _isLoading = true;
+  String? _errorMessage;
 
   @override
   void initState() {
@@ -33,31 +38,63 @@ class _CategoriesListPageState extends State<CategoriesListPage> {
   }
 
   Future<void> _loadCategories() async {
-    setState(() => _isLoading = true);
-    // TODO: Cargar desde el backend
-    await Future.delayed(const Duration(seconds: 1));
     setState(() {
-      _categories = [
-        {'id': '1', 'name': 'Electrónica', 'description': 'Productos electrónicos'},
-        {'id': '2', 'name': 'Ropa', 'description': 'Ropa y accesorios'},
-        {'id': '3', 'name': 'Alimentos', 'description': 'Productos alimenticios'},
-      ];
-      _filteredCategories = _categories;
-      _isLoading = false;
+      _isLoading = true;
+      _errorMessage = null;
     });
+
+    try {
+      final categories = await _categoryRepository.getCategories();
+      setState(() {
+        _categories = categories;
+        _filteredCategories = categories;
+        _isLoading = false;
+      });
+    } on ServerException catch (e) {
+      setState(() {
+        _errorMessage = e.message;
+        _isLoading = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.message),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } on NetworkException catch (e) {
+      setState(() {
+        _errorMessage = 'Error de conexión. Verifique su internet.';
+        _isLoading = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.message),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Error inesperado: $e';
+        _isLoading = false;
+      });
+    }
   }
 
   void _filterCategories() {
     final query = _searchController.text.toLowerCase();
     setState(() {
       _filteredCategories = _categories.where((category) {
-        return category['name'].toString().toLowerCase().contains(query) ||
-            category['description'].toString().toLowerCase().contains(query);
+        return category.name.toLowerCase().contains(query) ||
+            (category.description?.toLowerCase().contains(query) ?? false);
       }).toList();
     });
   }
 
-  void _deleteCategory(String id) {
+  void _deleteCategory(int categoryId) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -69,15 +106,38 @@ class _CategoriesListPageState extends State<CategoriesListPage> {
             child: const Text(AppStrings.cancel),
           ),
           TextButton(
-            onPressed: () {
-              setState(() {
-                _categories.removeWhere((cat) => cat['id'] == id);
-                _filteredCategories = _categories;
-              });
+            onPressed: () async {
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text(AppStrings.categoryDeleted)),
-              );
+              try {
+                await _categoryRepository.deleteCategory(categoryId);
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(AppStrings.categoryDeleted),
+                      backgroundColor: AppColors.success,
+                    ),
+                  );
+                  _loadCategories();
+                }
+              } on ServerException catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(e.message),
+                      backgroundColor: AppColors.error,
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error al eliminar: $e'),
+                      backgroundColor: AppColors.error,
+                    ),
+                  );
+                }
+              }
             },
             child: const Text(AppStrings.delete, style: TextStyle(color: AppColors.error)),
           ),
@@ -130,24 +190,46 @@ class _CategoriesListPageState extends State<CategoriesListPage> {
         Expanded(
           child: _isLoading
               ? const Center(child: CircularProgressIndicator())
-              : _filteredCategories.isEmpty
+              : _errorMessage != null
                   ? Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.category, size: 64, color: AppColors.textSecondary),
+                          Icon(Icons.error_outline, size: 64, color: AppColors.error),
                           const SizedBox(height: 16),
                           Text(
-                            _searchController.text.isEmpty
-                                ? AppStrings.noCategories
-                                : 'No se encontraron categorías',
+                            _errorMessage!,
                             style: AppTextStyles.bodyLarge.copyWith(
-                              color: AppColors.textSecondary,
+                              color: AppColors.error,
                             ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 16),
+                          ElevatedButton(
+                            onPressed: _loadCategories,
+                            child: const Text('Reintentar'),
                           ),
                         ],
                       ),
                     )
+                  : _filteredCategories.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.category, size: 64, color: AppColors.textSecondary),
+                              const SizedBox(height: 16),
+                              Text(
+                                _searchController.text.isEmpty
+                                    ? AppStrings.noCategories
+                                    : 'No se encontraron categorías',
+                                style: AppTextStyles.bodyLarge.copyWith(
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
                   : isMobile
                       ? ListView.builder(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -176,7 +258,7 @@ class _CategoriesListPageState extends State<CategoriesListPage> {
     );
   }
 
-  Widget _buildCategoryCard(BuildContext context, Map<String, dynamic> category, bool isMobile) {
+  Widget _buildCategoryCard(BuildContext context, Category category, bool isMobile) {
     return Card(
       elevation: 2,
       child: InkWell(
@@ -195,18 +277,20 @@ class _CategoriesListPageState extends State<CategoriesListPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          category['name'],
+                          category.name,
                           style: AppTextStyles.titleMedium,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          category['description'],
-                          style: AppTextStyles.bodySmall,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                        if (category.description != null && category.description!.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            category.description!,
+                            style: AppTextStyles.bodySmall,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -225,7 +309,7 @@ class _CategoriesListPageState extends State<CategoriesListPage> {
                       IconButton(
                         icon: const Icon(Icons.delete, size: 20),
                         color: AppColors.error,
-                        onPressed: () => _deleteCategory(category['id']),
+                        onPressed: () => category.categoryId != null ? _deleteCategory(category.categoryId!) : null,
                         tooltip: AppStrings.delete,
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(),
@@ -250,7 +334,7 @@ class _CategoriesListPageState extends State<CategoriesListPage> {
     ).then((_) => _loadCategories());
   }
 
-  void _navigateToEdit(BuildContext context, Map<String, dynamic> category) {
+  void _navigateToEdit(BuildContext context, Category category) {
     Navigator.push(
       context,
       MaterialPageRoute(

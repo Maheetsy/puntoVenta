@@ -4,9 +4,12 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/custom_button.dart';
 import '../../../../core/widgets/custom_text_field.dart';
+import '../../../../core/errors/exceptions.dart';
+import '../../../../config/di/injection_container.dart';
+import '../../domain/entities/category.dart';
 
 class CategoryFormPage extends StatefulWidget {
-  final Map<String, dynamic>? category;
+  final Category? category;
 
   const CategoryFormPage({super.key, this.category});
 
@@ -18,14 +21,15 @@ class _CategoryFormPageState extends State<CategoryFormPage> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
+  final _categoryRepository = injectionContainer.categoryRepository;
   bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
     if (widget.category != null) {
-      _nameController.text = widget.category!['name'] ?? '';
-      _descriptionController.text = widget.category!['description'] ?? '';
+      _nameController.text = widget.category!.name;
+      _descriptionController.text = widget.category!.description ?? '';
     }
   }
 
@@ -44,8 +48,19 @@ class _CategoryFormPageState extends State<CategoryFormPage> {
     setState(() => _isLoading = true);
 
     try {
-      // TODO: Guardar en el backend
-      await Future.delayed(const Duration(seconds: 1));
+      final category = Category(
+        categoryId: widget.category?.categoryId,
+        name: _nameController.text.trim(),
+        description: _descriptionController.text.trim().isEmpty
+            ? null
+            : _descriptionController.text.trim(),
+      );
+
+      if (widget.category == null) {
+        await _categoryRepository.createCategory(category);
+      } else {
+        await _categoryRepository.updateCategory(widget.category!.categoryId!, category);
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -60,11 +75,29 @@ class _CategoryFormPageState extends State<CategoryFormPage> {
         );
         Navigator.pop(context);
       }
+    } on ValidationException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.message),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } on ServerException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.message),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(AppStrings.errorGeneric),
+            content: Text('Error: $e'),
             backgroundColor: AppColors.error,
           ),
         );

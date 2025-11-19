@@ -4,9 +4,13 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/custom_button.dart';
 import '../../../../core/widgets/custom_text_field.dart';
+import '../../../../core/errors/exceptions.dart';
+import '../../../../config/di/injection_container.dart';
+import '../../domain/entities/product.dart';
+import '../../../categories/domain/entities/category.dart';
 
 class ProductFormPage extends StatefulWidget {
-  final Map<String, dynamic>? product;
+  final Product? product;
 
   const ProductFormPage({super.key, this.product});
 
@@ -21,27 +25,53 @@ class _ProductFormPageState extends State<ProductFormPage> {
   final _priceController = TextEditingController();
   final _stockController = TextEditingController();
   final _imageUrlController = TextEditingController();
-  String? _selectedCategory;
+  final _productRepository = injectionContainer.productRepository;
+  final _categoryRepository = injectionContainer.categoryRepository;
+  int? _selectedCategoryId;
   bool _isLoading = false;
+  bool _isLoadingCategories = true;
   bool _isActive = true;
-  List<String> _categories = ['Electrónica', 'Ropa', 'Alimentos'];
+  List<Category> _categories = [];
 
   @override
   void initState() {
     super.initState();
+    _loadCategories();
     if (widget.product != null) {
-      _nameController.text = widget.product!['name'] ?? '';
-      _descriptionController.text = widget.product!['description'] ?? '';
-      _priceController.text = widget.product!['price']?.toString() ?? '';
-      _stockController.text = widget.product!['stock']?.toString() ?? '';
-      _imageUrlController.text = widget.product!['image_url'] ?? '';
-      _selectedCategory = widget.product!['category'];
-      _isActive = widget.product!['active'] ?? true;
+      _nameController.text = widget.product!.name;
+      _descriptionController.text = widget.product!.description ?? '';
+      _priceController.text = widget.product!.price.toString();
+      _stockController.text = widget.product!.stock.toString();
+      _imageUrlController.text = widget.product!.imagenUrl ?? '';
+      _selectedCategoryId = widget.product!.categoryId;
+      _isActive = widget.product!.active;
     } else {
       // Valor inicial en 0 para productos nuevos
       _priceController.text = '0';
       _stockController.text = '0';
       _isActive = true;
+    }
+  }
+
+  Future<void> _loadCategories() async {
+    try {
+      final categories = await _categoryRepository.getCategories();
+      setState(() {
+        _categories = categories;
+        _isLoadingCategories = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoadingCategories = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al cargar categorías: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
     }
   }
 
@@ -60,7 +90,7 @@ class _ProductFormPageState extends State<ProductFormPage> {
       return;
     }
 
-    if (_selectedCategory == null) {
+    if (_selectedCategoryId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Por favor seleccione una categoría'),
@@ -73,8 +103,29 @@ class _ProductFormPageState extends State<ProductFormPage> {
     setState(() => _isLoading = true);
 
     try {
-      // TODO: Guardar en el backend
-      await Future.delayed(const Duration(seconds: 1));
+      final price = double.tryParse(_priceController.text) ?? 0.0;
+      final stock = int.tryParse(_stockController.text) ?? 0;
+
+      final product = Product(
+        productId: widget.product?.productId,
+        name: _nameController.text.trim(),
+        description: _descriptionController.text.trim().isEmpty
+            ? null
+            : _descriptionController.text.trim(),
+        price: price,
+        stock: stock,
+        imagenUrl: _imageUrlController.text.trim().isEmpty
+            ? null
+            : _imageUrlController.text.trim(),
+        active: _isActive,
+        categoryId: _selectedCategoryId!,
+      );
+
+      if (widget.product == null) {
+        await _productRepository.createProduct(product);
+      } else {
+        await _productRepository.updateProduct(widget.product!.productId!, product);
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -89,11 +140,29 @@ class _ProductFormPageState extends State<ProductFormPage> {
         );
         Navigator.pop(context);
       }
+    } on ValidationException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.message),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } on ServerException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.message),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(AppStrings.errorGeneric),
+            content: Text('Error: $e'),
             backgroundColor: AppColors.error,
           ),
         );
@@ -141,28 +210,30 @@ class _ProductFormPageState extends State<ProductFormPage> {
                     prefixIcon: const Icon(Icons.description),
                   ),
                   const SizedBox(height: 16),
-                  DropdownButtonFormField<String>(
-                    value: _selectedCategory,
-                    decoration: InputDecoration(
-                      labelText: AppStrings.productCategory,
-                      prefixIcon: const Icon(Icons.category),
-                    ),
-                    items: _categories.map((category) {
-                      return DropdownMenuItem(
-                        value: category,
-                        child: Text(category),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      setState(() => _selectedCategory = value);
-                    },
-                    validator: (value) {
-                      if (value == null) {
-                        return 'La categoría es requerida';
-                      }
-                      return null;
-                    },
-                  ),
+                  _isLoadingCategories
+                      ? const CircularProgressIndicator()
+                      : DropdownButtonFormField<int>(
+                          value: _selectedCategoryId,
+                          decoration: InputDecoration(
+                            labelText: AppStrings.productCategory,
+                            prefixIcon: const Icon(Icons.category),
+                          ),
+                          items: _categories.map((category) {
+                            return DropdownMenuItem(
+                              value: category.categoryId,
+                              child: Text(category.name),
+                            );
+                          }).toList(),
+                          onChanged: (value) {
+                            setState(() => _selectedCategoryId = value);
+                          },
+                          validator: (value) {
+                            if (value == null) {
+                              return 'La categoría es requerida';
+                            }
+                            return null;
+                          },
+                        ),
                   const SizedBox(height: 16),
                   CustomTextField(
                     label: AppStrings.productImage,

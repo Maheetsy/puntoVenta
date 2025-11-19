@@ -4,6 +4,9 @@ import '../../../../core/constants/app_routes.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/widgets/responsive_layout.dart';
+import '../../../../core/errors/exceptions.dart';
+import '../../../../config/di/injection_container.dart';
+import '../../domain/entities/product.dart';
 import 'product_form_page.dart';
 
 class ProductsListPage extends StatefulWidget {
@@ -15,9 +18,11 @@ class ProductsListPage extends StatefulWidget {
 
 class _ProductsListPageState extends State<ProductsListPage> {
   final TextEditingController _searchController = TextEditingController();
-  List<Map<String, dynamic>> _products = [];
-  List<Map<String, dynamic>> _filteredProducts = [];
+  final _productRepository = injectionContainer.productRepository;
+  List<Product> _products = [];
+  List<Product> _filteredProducts = [];
   bool _isLoading = true;
+  String? _errorMessage;
 
   @override
   void initState() {
@@ -33,56 +38,64 @@ class _ProductsListPageState extends State<ProductsListPage> {
   }
 
   Future<void> _loadProducts() async {
-    setState(() => _isLoading = true);
-    // TODO: Cargar desde el backend
-    await Future.delayed(const Duration(seconds: 1));
     setState(() {
-      _products = [
-        {
-          'id': '1',
-          'name': 'Producto 1',
-          'description': 'Descripción del producto 1',
-          'price': 99.99,
-          'stock': 50,
-          'category': 'Electrónica',
-          'barcode': '1234567890',
-        },
-        {
-          'id': '2',
-          'name': 'Producto 2',
-          'description': 'Descripción del producto 2',
-          'price': 149.99,
-          'stock': 30,
-          'category': 'Ropa',
-          'barcode': '0987654321',
-        },
-        {
-          'id': '3',
-          'name': 'Producto 3',
-          'description': 'Descripción del producto 3',
-          'price': 79.99,
-          'stock': 10,
-          'category': 'Alimentos',
-          'barcode': '1122334455',
-        },
-      ];
-      _filteredProducts = _products;
-      _isLoading = false;
+      _isLoading = true;
+      _errorMessage = null;
     });
+
+    try {
+      final products = await _productRepository.getProducts();
+      setState(() {
+        _products = products;
+        _filteredProducts = products;
+        _isLoading = false;
+      });
+    } on ServerException catch (e) {
+      setState(() {
+        _errorMessage = e.message;
+        _isLoading = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.message),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } on NetworkException catch (e) {
+      setState(() {
+        _errorMessage = 'Error de conexión. Verifique su internet.';
+        _isLoading = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.message),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Error inesperado: $e';
+        _isLoading = false;
+      });
+    }
   }
 
   void _filterProducts() {
     final query = _searchController.text.toLowerCase();
     setState(() {
       _filteredProducts = _products.where((product) {
-        return product['name'].toString().toLowerCase().contains(query) ||
-            product['description'].toString().toLowerCase().contains(query) ||
-            product['category'].toString().toLowerCase().contains(query);
+        return product.name.toLowerCase().contains(query) ||
+            (product.description?.toLowerCase().contains(query) ?? false) ||
+            (product.categoryName?.toLowerCase().contains(query) ?? false);
       }).toList();
     });
   }
 
-  void _deleteProduct(String id) {
+  void _deleteProduct(int productId) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -94,15 +107,38 @@ class _ProductsListPageState extends State<ProductsListPage> {
             child: const Text(AppStrings.cancel),
           ),
           TextButton(
-            onPressed: () {
-              setState(() {
-                _products.removeWhere((prod) => prod['id'] == id);
-                _filteredProducts = _products;
-              });
+            onPressed: () async {
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text(AppStrings.productDeleted)),
-              );
+              try {
+                await _productRepository.deleteProduct(productId);
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(AppStrings.productDeleted),
+                      backgroundColor: AppColors.success,
+                    ),
+                  );
+                  _loadProducts();
+                }
+              } on ServerException catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(e.message),
+                      backgroundColor: AppColors.error,
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error al eliminar: $e'),
+                      backgroundColor: AppColors.error,
+                    ),
+                  );
+                }
+              }
             },
             child: const Text(AppStrings.delete, style: TextStyle(color: AppColors.error)),
           ),
@@ -111,7 +147,7 @@ class _ProductsListPageState extends State<ProductsListPage> {
     );
   }
 
-  void _showStockModal(BuildContext context, Map<String, dynamic> product) {
+  void _showStockModal(BuildContext context, Product product) {
     final quantityController = TextEditingController();
     final noteController = TextEditingController();
     String? selectedCategory;
@@ -122,7 +158,7 @@ class _ProductsListPageState extends State<ProductsListPage> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setModalState) => AlertDialog(
-          title: Text('Abastecer: ${product['name']}'),
+          title: Text('Abastecer: ${product.name}'),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -195,7 +231,7 @@ class _ProductsListPageState extends State<ProductsListPage> {
               child: const Text(AppStrings.cancel),
             ),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 final quantity = int.tryParse(quantityController.text);
                 if (quantity == null || quantity <= 0) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -209,22 +245,43 @@ class _ProductsListPageState extends State<ProductsListPage> {
                   );
                   return;
                 }
-                setState(() {
-                  final currentStock = product['stock'] as int;
-                  product['stock'] = isAdd ? currentStock + quantity : currentStock - quantity;
-                  if (product['stock'] < 0) product['stock'] = 0;
-                });
+
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      isAdd
-                          ? 'Se agregaron $quantity unidades al inventario'
-                          : 'Se quitaron $quantity unidades del inventario',
-                    ),
-                    backgroundColor: AppColors.success,
-                  ),
-                );
+                try {
+                  final quantityToUpdate = isAdd ? quantity : -quantity;
+                  await _productRepository.updateStock(product.productId!, quantityToUpdate);
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          isAdd
+                              ? 'Se agregaron $quantity unidades al inventario'
+                              : 'Se quitaron $quantity unidades del inventario',
+                        ),
+                        backgroundColor: AppColors.success,
+                      ),
+                    );
+                    _loadProducts();
+                  }
+                } on ValidationException catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(e.message),
+                        backgroundColor: AppColors.error,
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Error al actualizar stock: $e'),
+                        backgroundColor: AppColors.error,
+                      ),
+                    );
+                  }
+                }
               },
               child: const Text('Guardar'),
             ),
@@ -278,24 +335,46 @@ class _ProductsListPageState extends State<ProductsListPage> {
         Expanded(
           child: _isLoading
               ? const Center(child: CircularProgressIndicator())
-              : _filteredProducts.isEmpty
+              : _errorMessage != null
                   ? Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.inventory_2, size: 64, color: AppColors.textSecondary),
+                          Icon(Icons.error_outline, size: 64, color: AppColors.error),
                           const SizedBox(height: 16),
                           Text(
-                            _searchController.text.isEmpty
-                                ? AppStrings.noProducts
-                                : 'No se encontraron productos',
+                            _errorMessage!,
                             style: AppTextStyles.bodyLarge.copyWith(
-                              color: AppColors.textSecondary,
+                              color: AppColors.error,
                             ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 16),
+                          ElevatedButton(
+                            onPressed: _loadProducts,
+                            child: const Text('Reintentar'),
                           ),
                         ],
                       ),
                     )
+                  : _filteredProducts.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.inventory_2, size: 64, color: AppColors.textSecondary),
+                              const SizedBox(height: 16),
+                              Text(
+                                _searchController.text.isEmpty
+                                    ? AppStrings.noProducts
+                                    : 'No se encontraron productos',
+                                style: AppTextStyles.bodyLarge.copyWith(
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
                   : isMobile
                       ? ListView.builder(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -324,8 +403,8 @@ class _ProductsListPageState extends State<ProductsListPage> {
     );
   }
 
-  Widget _buildProductCard(BuildContext context, Map<String, dynamic> product, bool isMobile) {
-    final stock = product['stock'] as int;
+  Widget _buildProductCard(BuildContext context, Product product, bool isMobile) {
+    final stock = product.stock;
     final stockColor = stock > 20
         ? AppColors.success
         : stock > 10
@@ -350,14 +429,14 @@ class _ProductsListPageState extends State<ProductsListPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          product['name'],
+                          product.name,
                           style: AppTextStyles.titleMedium,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          product['category'],
+                          product.categoryName ?? 'Sin categoría',
                           style: AppTextStyles.bodySmall.copyWith(
                             color: AppColors.primary,
                           ),
@@ -380,7 +459,7 @@ class _ProductsListPageState extends State<ProductsListPage> {
                       IconButton(
                         icon: const Icon(Icons.delete, size: 20),
                         color: AppColors.error,
-                        onPressed: () => _deleteProduct(product['id']),
+                        onPressed: () => product.productId != null ? _deleteProduct(product.productId!) : null,
                         tooltip: AppStrings.delete,
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(),
@@ -390,21 +469,44 @@ class _ProductsListPageState extends State<ProductsListPage> {
                 ],
               ),
               const SizedBox(height: 8),
-              Text(
-                product['description'],
-                style: AppTextStyles.bodySmall,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 8),
+              if (product.description != null && product.description!.isNotEmpty)
+                Text(
+                  product.description!,
+                  style: AppTextStyles.bodySmall,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              if (product.description != null && product.description!.isNotEmpty)
+                const SizedBox(height: 8),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    '\$${product['price'].toStringAsFixed(2)}',
-                    style: AppTextStyles.priceCard.copyWith(
-                      color: AppColors.primary,
-                    ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '\$${product.price.toStringAsFixed(2)}',
+                        style: AppTextStyles.priceCard.copyWith(
+                          color: AppColors.primary,
+                        ),
+                      ),
+                      if (!product.active)
+                        Container(
+                          margin: const EdgeInsets.only(top: 4),
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppColors.error.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            'Inactivo',
+                            style: AppTextStyles.bodySmall.copyWith(
+                              color: AppColors.error,
+                              fontSize: 10,
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                   Row(
                     mainAxisSize: MainAxisSize.min,
@@ -416,7 +518,7 @@ class _ProductsListPageState extends State<ProductsListPage> {
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
-                          'Stock: ${product['stock']}',
+                          'Stock: ${product.stock}',
                           style: AppTextStyles.bodySmall.copyWith(
                             color: stockColor,
                             fontWeight: FontWeight.w600,
@@ -452,7 +554,7 @@ class _ProductsListPageState extends State<ProductsListPage> {
     ).then((_) => _loadProducts());
   }
 
-  void _navigateToEdit(BuildContext context, Map<String, dynamic> product) {
+  void _navigateToEdit(BuildContext context, Product product) {
     Navigator.push(
       context,
       MaterialPageRoute(

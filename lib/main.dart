@@ -4,8 +4,10 @@ import 'package:shared_preferences/shared_preferences.dart'; // <- Importar Shar
 
 import 'core/theme/app_theme.dart';
 import 'core/constants/app_routes.dart';
+import 'core/services/auth_service.dart';
 
 // --- Importa tus páginas ---
+import 'features/auth/presentation/pages/login_page.dart';
 import 'features/dashboard/presentation/pages/dashboard_page.dart';
 import 'features/products/presentation/pages/products_list_page.dart';
 import 'features/categories/presentation/pages/categories_list_page.dart';
@@ -32,21 +34,27 @@ Future<void> main() async {
     orElse: () => ThemeMode.light,
   );
 
-  // 5. Envolvemos la app con el "Proveedor" del tema
+  // 5. Verificar si hay un token guardado
+  final isAuthenticated = await AuthService.isAuthenticated();
+  final initialRoute = isAuthenticated ? AppRoutes.dashboard : AppRoutes.login;
+
+  // 6. Envolvemos la app con el "Proveedor" del tema
   runApp(
     ChangeNotifierProvider(
       create: (context) => ThemeManager(initialThemeMode),
-      child: const MyApp(),
+      child: MyApp(initialRoute: initialRoute),
     ),
   );
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final String initialRoute;
+
+  const MyApp({super.key, required this.initialRoute});
 
   @override
   Widget build(BuildContext context) {
-    // 6. "Escuchamos" los cambios del ThemeManager
+    // 7. "Escuchamos" los cambios del ThemeManager
     final themeManager = context.watch<ThemeManager>();
 
     return MaterialApp(
@@ -59,8 +67,9 @@ class MyApp extends StatelessWidget {
       themeMode: themeManager.themeMode, // <-- ¡LA MAGIA OCURRE AQUÍ!
       // -----------------------
 
-      initialRoute: AppRoutes.dashboard,
+      initialRoute: initialRoute,
       routes: {
+        AppRoutes.login: (context) => const LoginPage(),
         AppRoutes.dashboard: (context) => const DashboardPage(),
         AppRoutes.products: (context) => const ProductsListPage(),
         AppRoutes.categories: (context) => const CategoriesListPage(),

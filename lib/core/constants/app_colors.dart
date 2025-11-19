@@ -4,7 +4,7 @@ class AppColors {
   // Constructor privado para evitar instanciación
   AppColors._();
   static const Color background = Color.fromARGB(255, 251, 254, 255);
-  static const Color backgroundSecondary = Color(0xFFE6F7FF);
+  static const Color backgroundSecondary = Color(0xFFF1F2F2);
   static const Color cardBackground = Color.fromARGB(255, 202, 234, 255);
   // Primary (Azul) - #1B98E0 y #1E96FC para botones
   static const Color primary = Color(0xFF1B98E0); // #1B98E0
