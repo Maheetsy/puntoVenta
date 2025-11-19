@@ -23,15 +23,38 @@ class ResponsiveLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isMobile = MediaQuery.of(context).size.width < 768;
+    final width = MediaQuery.of(context).size.width;
+    final isMobile = width < 768;
+    final isWeb = width >= 1200;
+    final maxWidth = isWeb ? 1200.0 : (width < 768 ? width : 800.0);
+
+    final iconActions = <Widget>[];
+    if (actions != null) {
+      iconActions.addAll(actions!);
+    }
+    // Agregar icono en la esquina superior derecha
+    try {
+      iconActions.add(
+        Padding(
+          padding: const EdgeInsets.only(right: 8),
+          child: Image.asset(
+            'assets/images/icono.png',
+            width: 32,
+            height: 32,
+            errorBuilder: (context, error, stackTrace) {
+              return const SizedBox.shrink();
+            },
+          ),
+        ),
+      );
+    } catch (e) {
+      // Si no existe la imagen, no mostrar nada
+    }
 
     if (isMobile) {
       return Scaffold(
         appBar: title != null
-            ? AppBar(
-                title: Text(title!),
-                actions: actions,
-              )
+            ? AppBar(title: Text(title!), actions: iconActions)
             : null,
         body: body,
         bottomNavigationBar: ResponsiveNavbar(
@@ -44,20 +67,18 @@ class ResponsiveLayout extends StatelessWidget {
     } else {
       return Scaffold(
         appBar: title != null
-            ? AppBar(
-                title: Text(title!),
-                actions: actions,
-              )
+            ? AppBar(title: Text(title!), actions: iconActions)
             : null,
-        drawer: ResponsiveNavbar(
-          currentIndex: currentIndex,
-          onTap: onNavTap,
+        drawer: ResponsiveNavbar(currentIndex: currentIndex, onTap: onNavTap),
+        body: Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: maxWidth),
+            child: body,
+          ),
         ),
-        body: body,
         floatingActionButton: floatingActionButton,
         floatingActionButtonLocation: floatingActionButtonLocation,
       );
     }
   }
 }
-

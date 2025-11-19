@@ -77,8 +77,7 @@ class _ProductsListPageState extends State<ProductsListPage> {
       _filteredProducts = _products.where((product) {
         return product['name'].toString().toLowerCase().contains(query) ||
             product['description'].toString().toLowerCase().contains(query) ||
-            product['category'].toString().toLowerCase().contains(query) ||
-            product['barcode'].toString().toLowerCase().contains(query);
+            product['category'].toString().toLowerCase().contains(query);
       }).toList();
     });
   }
@@ -108,6 +107,129 @@ class _ProductsListPageState extends State<ProductsListPage> {
             child: const Text(AppStrings.delete, style: TextStyle(color: AppColors.error)),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showStockModal(BuildContext context, Map<String, dynamic> product) {
+    final quantityController = TextEditingController();
+    final noteController = TextEditingController();
+    String? selectedCategory;
+    final categories = ['Reabastecimiento de inventario', 'Ajuste de inventario', 'Devolución', 'Pérdida', 'Otro'];
+    bool isAdd = true;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => AlertDialog(
+          title: Text('Abastecer: ${product['name']}'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: ChoiceChip(
+                        label: const Text('Agregar'),
+                        selected: isAdd,
+                        onSelected: (selected) {
+                          setModalState(() => isAdd = true);
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: ChoiceChip(
+                        label: const Text('Quitar'),
+                        selected: !isAdd,
+                        onSelected: (selected) {
+                          setModalState(() => isAdd = false);
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: quantityController,
+                  decoration: const InputDecoration(
+                    labelText: 'Cantidad',
+                    prefixIcon: Icon(Icons.numbers),
+                  ),
+                  keyboardType: TextInputType.number,
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  value: selectedCategory,
+                  decoration: const InputDecoration(
+                    labelText: 'Categoría',
+                    prefixIcon: Icon(Icons.category),
+                  ),
+                  items: categories.map((cat) {
+                    return DropdownMenuItem(
+                      value: cat,
+                      child: Text(cat),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setModalState(() => selectedCategory = value);
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: noteController,
+                  decoration: const InputDecoration(
+                    labelText: 'Nota',
+                    prefixIcon: Icon(Icons.note),
+                  ),
+                  maxLines: 3,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text(AppStrings.cancel),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final quantity = int.tryParse(quantityController.text);
+                if (quantity == null || quantity <= 0) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Por favor ingrese una cantidad válida')),
+                  );
+                  return;
+                }
+                if (selectedCategory == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Por favor seleccione una categoría')),
+                  );
+                  return;
+                }
+                setState(() {
+                  final currentStock = product['stock'] as int;
+                  product['stock'] = isAdd ? currentStock + quantity : currentStock - quantity;
+                  if (product['stock'] < 0) product['stock'] = 0;
+                });
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      isAdd
+                          ? 'Se agregaron $quantity unidades al inventario'
+                          : 'Se quitaron $quantity unidades del inventario',
+                    ),
+                    backgroundColor: AppColors.success,
+                  ),
+                );
+              },
+              child: const Text('Guardar'),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -243,37 +365,27 @@ class _ProductsListPageState extends State<ProductsListPage> {
                       ],
                     ),
                   ),
-                  PopupMenuButton(
-                    icon: const Icon(Icons.more_vert),
-                    itemBuilder: (context) => [
-                      PopupMenuItem(
-                        value: 'edit',
-                        child: const Row(
-                          children: [
-                            Icon(Icons.edit, size: 20),
-                            SizedBox(width: 8),
-                            Text(AppStrings.edit),
-                          ],
-                        ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.edit, size: 20),
+                        color: AppColors.primary,
+                        onPressed: () => _navigateToEdit(context, product),
+                        tooltip: AppStrings.edit,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
                       ),
-                      PopupMenuItem(
-                        value: 'delete',
-                        child: const Row(
-                          children: [
-                            Icon(Icons.delete, size: 20, color: AppColors.error),
-                            SizedBox(width: 8),
-                            Text(AppStrings.delete, style: TextStyle(color: AppColors.error)),
-                          ],
-                        ),
+                      const SizedBox(width: 8),
+                      IconButton(
+                        icon: const Icon(Icons.delete, size: 20),
+                        color: AppColors.error,
+                        onPressed: () => _deleteProduct(product['id']),
+                        tooltip: AppStrings.delete,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
                       ),
                     ],
-                    onSelected: (value) {
-                      if (value == 'edit') {
-                        _navigateToEdit(context, product);
-                      } else if (value == 'delete') {
-                        _deleteProduct(product['id']);
-                      }
-                    },
                   ),
                 ],
               ),
@@ -294,19 +406,33 @@ class _ProductsListPageState extends State<ProductsListPage> {
                       color: AppColors.primary,
                     ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: stockColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      'Stock: ${product['stock']}',
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: stockColor,
-                        fontWeight: FontWeight.w600,
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: stockColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          'Stock: ${product['stock']}',
+                          style: AppTextStyles.bodySmall.copyWith(
+                            color: stockColor,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ),
-                    ),
+                      const SizedBox(width: 8),
+                      IconButton(
+                        icon: const Icon(Icons.add_circle, size: 24),
+                        color: AppColors.primary,
+                        onPressed: () => _showStockModal(context, product),
+                        tooltip: 'Abastecer inventario',
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -350,7 +476,10 @@ class _ProductsListPageState extends State<ProductsListPage> {
         Navigator.pushReplacementNamed(context, AppRoutes.sales);
         break;
       case 4:
-        Navigator.pushReplacementNamed(context, AppRoutes.clients);
+        Navigator.pushReplacementNamed(context, AppRoutes.reports);
+        break;
+      case 5:
+        Navigator.pushReplacementNamed(context, AppRoutes.settings);
         break;
     }
   }

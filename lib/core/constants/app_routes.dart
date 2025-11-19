@@ -15,11 +15,6 @@ class AppRoutes {
   static const String createCategory = '/categories/create';
   static const String editCategory = '/categories/edit';
   
-  // Clientes
-  static const String clients = '/clients';
-  static const String createClient = '/clients/create';
-  static const String editClient = '/clients/edit';
-  
   // Ventas
   static const String sales = '/sales';
   static const String createSale = '/sales/create';

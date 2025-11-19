@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_routes.dart'; // Asegúrate de que la ruta sea correcta
-import '../../../../core/widgets/responsive_layout.dart'; // Importa tu layout
+import '../../../../core/constants/app_routes.dart';
+import '../../../../core/constants/app_colors.dart';
+import '../../../../core/widgets/responsive_layout.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/theme/theme_manager.dart';
+
 // 1. Convertimos a StatefulWidget
 class ConfigurationPage extends StatefulWidget {
   const ConfigurationPage({super.key});
@@ -42,7 +44,7 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
   Widget build(BuildContext context) {
     // 5. El 'build' ahora usa los controladores que ya existen
     return ResponsiveLayout(
-      currentIndex: 6,
+      currentIndex: 5,
       onNavTap: (index) => _navigateToPage(context, index),
       title: 'Configuración',
       body: _buildConfigurationBody(context),
@@ -70,25 +72,120 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
           Navigator.pushReplacementNamed(context, AppRoutes.sales);
         break;
       case 4:
-        if (currentRoute != AppRoutes.clients)
-          Navigator.pushReplacementNamed(context, AppRoutes.clients);
-        break;
-      case 5:
         if (currentRoute != AppRoutes.reports)
           Navigator.pushReplacementNamed(context, AppRoutes.reports);
         break;
-      case 6:
+      case 5:
         break;
     }
   }
 
-  // Contenido de la página (no cambia, solo usa los controladores)
+  // Contenido de la página
   Widget _buildConfigurationBody(BuildContext context) {
     final themeManager = context.watch<ThemeManager>();
+    final isMobile = MediaQuery.of(context).size.width < 768;
 
     return ListView(
-      padding: const EdgeInsets.all(24.0),
+      padding: EdgeInsets.all(isMobile ? 16 : 24),
       children: [
+        // Perfil de Usuario
+        Text(
+          'Perfil de Usuario',
+          style: Theme.of(context).textTheme.headlineSmall,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Gestiona tu información personal y configuración de cuenta.',
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
+        const SizedBox(height: 24),
+
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 40,
+                      backgroundColor: AppColors.primaryContainer,
+                      child: Text(
+                        'U',
+                        style: Theme.of(context).textTheme.headlineMedium
+                            ?.copyWith(color: AppColors.primary),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Usuario Actual',
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'user@example.com',
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                TextFormField(
+                  decoration: const InputDecoration(
+                    labelText: 'Nombre Completo',
+                    prefixIcon: Icon(Icons.person),
+                    border: OutlineInputBorder(),
+                  ),
+                  initialValue: 'Usuario Demo',
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  decoration: const InputDecoration(
+                    labelText: 'Correo Electrónico',
+                    prefixIcon: Icon(Icons.email),
+                    border: OutlineInputBorder(),
+                  ),
+                  initialValue: 'user@example.com',
+                  keyboardType: TextInputType.emailAddress,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  decoration: const InputDecoration(
+                    labelText: 'Teléfono',
+                    prefixIcon: Icon(Icons.phone),
+                    border: OutlineInputBorder(),
+                  ),
+                  initialValue: '+1234567890',
+                  keyboardType: TextInputType.phone,
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Perfil actualizado')),
+                    );
+                  },
+                  child: const Text('Actualizar Perfil'),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 32),
+        const Divider(height: 40),
+
+        // Datos del Negocio
         Text(
           'Datos del Negocio',
           style: Theme.of(context).textTheme.headlineSmall,
@@ -147,10 +244,7 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
 
         const Divider(height: 40),
 
-        Text(
-          'Apariencia',
-          style: Theme.of(context).textTheme.headlineSmall,
-        ),
+        Text('Apariencia', style: Theme.of(context).textTheme.headlineSmall),
 
         SwitchListTile(
           title: const Text('Modo Oscuro'),

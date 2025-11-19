@@ -53,10 +53,6 @@ class ResponsiveNavbar extends StatelessWidget {
           icon: Icon(Icons.shopping_cart),
           label: AppStrings.navSales,
         ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.people),
-          label: AppStrings.navClients,
-        ),
       ],
     );
   }
@@ -80,10 +76,17 @@ class ResponsiveNavbar extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                const Icon(
-                  Icons.point_of_sale,
-                  size: 48,
-                  color: Colors.white,
+                Image.asset(
+                  'assets/images/icono.png',
+                  width: 48,
+                  height: 48,
+                  errorBuilder: (context, error, stackTrace) {
+                    return const Icon(
+                      Icons.point_of_sale,
+                      size: 48,
+                      color: Colors.white,
+                    );
+                  },
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -124,27 +127,20 @@ class ResponsiveNavbar extends StatelessWidget {
             route: AppRoutes.sales,
             index: 3,
           ),
-          _buildNavItem(
-            context,
-            icon: Icons.people,
-            title: AppStrings.navClients,
-            route: AppRoutes.clients,
-            index: 4,
-          ),
           const Divider(),
           _buildNavItem(
             context,
             icon: Icons.assessment,
             title: AppStrings.navReports,
             route: AppRoutes.reports,
-            index: 5,
+            index: 4,
           ),
           _buildNavItem(
             context,
             icon: Icons.settings,
             title: AppStrings.navSettings,
             route: AppRoutes.settings,
-            index: 6,
+            index: 5,
           ),
         ],
       ),

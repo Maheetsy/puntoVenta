@@ -37,7 +37,8 @@ class CustomButton extends StatelessWidget {
                 color: backgroundColor ?? AppColors.primary,
                 width: 1.5,
               ),
-              minimumSize: Size(width ?? double.infinity, height ?? 48),
+              minimumSize: Size(width ?? double.infinity, height ?? 36),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -49,7 +50,8 @@ class CustomButton extends StatelessWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: backgroundColor ?? AppColors.primary,
               foregroundColor: textColor ?? AppColors.textOnPrimary,
-              minimumSize: Size(width ?? double.infinity, height ?? 48),
+              minimumSize: Size(width ?? double.infinity, height ?? 36),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),

@@ -42,14 +42,10 @@ class ReportsPage extends StatelessWidget {
         if (currentRoute != AppRoutes.sales)
           Navigator.pushReplacementNamed(context, AppRoutes.sales);
         break;
-      case 4:
-        if (currentRoute != AppRoutes.clients)
-          Navigator.pushReplacementNamed(context, AppRoutes.clients);
+      case 4: // Reports
+        // No hacer nada si ya estamos aquí
         break;
-      case 5: // Reports
-      // No hacer nada si ya estamos aquí
-        break;
-      case 6: // Configuration
+      case 5: // Configuration
         if (currentRoute != AppRoutes.settings)
           Navigator.pushReplacementNamed(context, AppRoutes.settings);
         break;
@@ -75,13 +71,17 @@ class ReportsPage extends StatelessWidget {
               ElevatedButton.icon(
                 icon: const Icon(Icons.calendar_today),
                 label: const Text('Fecha Inicio'),
-                onPressed: () { /* Lógica para mostrar DatePicker */ },
+                onPressed: () {
+                  /* Lógica para mostrar DatePicker */
+                },
               ),
               const SizedBox(width: 16),
               ElevatedButton.icon(
                 icon: const Icon(Icons.calendar_today),
                 label: const Text('Fecha Fin'),
-                onPressed: () { /* Lógica para mostrar DatePicker */ },
+                onPressed: () {
+                  /* Lógica para mostrar DatePicker */
+                },
               ),
             ],
           ),
@@ -171,7 +171,9 @@ class ReportsPage extends StatelessWidget {
 
     // Por ahora, solo muestra un diálogo de éxito
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Generando PDF... (Lógica no implementada)')),
+      const SnackBar(
+        content: Text('Generando PDF... (Lógica no implementada)'),
+      ),
     );
   }
 }

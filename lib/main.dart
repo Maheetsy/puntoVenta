@@ -10,7 +10,6 @@ import 'features/dashboard/presentation/pages/dashboard_page.dart';
 import 'features/products/presentation/pages/products_list_page.dart';
 import 'features/categories/presentation/pages/categories_list_page.dart';
 import 'features/sales/presentation/pages/sales_list_page.dart';
-import 'features/clients/presentation/pages/clients_list_page.dart';
 import 'features/reports/presentation/pages/reports_page.dart';
 import 'features/configuration/presentation/pages/configuration_page.dart';
 
@@ -66,7 +65,6 @@ class MyApp extends StatelessWidget {
         AppRoutes.products: (context) => const ProductsListPage(),
         AppRoutes.categories: (context) => const CategoriesListPage(),
         AppRoutes.sales: (context) => const SalesListPage(),
-        AppRoutes.clients: (context) => const ClientsListPage(),
         AppRoutes.reports: (context) => const ReportsPage(),
         AppRoutes.settings: (context) => const ConfigurationPage(),
       },

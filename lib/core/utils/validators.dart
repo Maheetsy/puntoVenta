@@ -97,5 +97,31 @@ class Validators {
     }
     return null;
   }
-}
 
+  // Validar URL
+  static String? url(String? value, [String? fieldName]) {
+    if (value == null || value.isEmpty) {
+      return null; // URL es opcional
+    }
+    final uri = Uri.tryParse(value);
+    if (uri == null || !uri.hasAbsolutePath) {
+      return 'Ingrese una URL válida';
+    }
+    return null;
+  }
+
+  // Validar que sea un valor no negativo
+  static String? nonNegative(String? value, [String? fieldName]) {
+    if (value == null || value.isEmpty) {
+      return '${fieldName ?? 'Este campo'} es requerido';
+    }
+    final number = double.tryParse(value);
+    if (number == null) {
+      return 'Ingrese un número válido';
+    }
+    if (number < 0) {
+      return 'El valor no puede ser negativo';
+    }
+    return null;
+  }
+}

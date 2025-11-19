@@ -20,9 +20,10 @@ class _ProductFormPageState extends State<ProductFormPage> {
   final _descriptionController = TextEditingController();
   final _priceController = TextEditingController();
   final _stockController = TextEditingController();
-  final _barcodeController = TextEditingController();
+  final _imageUrlController = TextEditingController();
   String? _selectedCategory;
   bool _isLoading = false;
+  bool _isActive = true;
   List<String> _categories = ['Electrónica', 'Ropa', 'Alimentos'];
 
   @override
@@ -33,8 +34,14 @@ class _ProductFormPageState extends State<ProductFormPage> {
       _descriptionController.text = widget.product!['description'] ?? '';
       _priceController.text = widget.product!['price']?.toString() ?? '';
       _stockController.text = widget.product!['stock']?.toString() ?? '';
-      _barcodeController.text = widget.product!['barcode'] ?? '';
+      _imageUrlController.text = widget.product!['image_url'] ?? '';
       _selectedCategory = widget.product!['category'];
+      _isActive = widget.product!['active'] ?? true;
+    } else {
+      // Valor inicial en 0 para productos nuevos
+      _priceController.text = '0';
+      _stockController.text = '0';
+      _isActive = true;
     }
   }
 
@@ -44,7 +51,7 @@ class _ProductFormPageState extends State<ProductFormPage> {
     _descriptionController.dispose();
     _priceController.dispose();
     _stockController.dispose();
-    _barcodeController.dispose();
+    _imageUrlController.dispose();
     super.dispose();
   }
 
@@ -157,13 +164,28 @@ class _ProductFormPageState extends State<ProductFormPage> {
                     },
                   ),
                   const SizedBox(height: 16),
+                  CustomTextField(
+                    label: AppStrings.productImage,
+                    controller: _imageUrlController,
+                    prefixIcon: const Icon(Icons.image),
+                    validator: (value) {
+                      if (value != null && value.isNotEmpty) {
+                        final uri = Uri.tryParse(value);
+                        if (uri == null || !uri.hasAbsolutePath) {
+                          return 'Ingrese una URL válida';
+                        }
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
                   Row(
                     children: [
                       Expanded(
                         child: CustomTextField(
                           label: AppStrings.productPrice,
                           controller: _priceController,
-                          keyboardType: TextInputType.number,
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
                           validator: (value) => Validators.positiveNumber(value, 'Precio'),
                           prefixIcon: const Icon(Icons.attach_money),
                         ),
@@ -181,13 +203,17 @@ class _ProductFormPageState extends State<ProductFormPage> {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  CustomTextField(
-                    label: AppStrings.productBarcode,
-                    controller: _barcodeController,
-                    keyboardType: TextInputType.number,
-                    prefixIcon: const Icon(Icons.qr_code),
+                  SwitchListTile(
+                    title: const Text('Producto Activo'),
+                    subtitle: Text(_isActive ? 'El producto está activo' : 'El producto está desactivado'),
+                    value: _isActive,
+                    onChanged: (value) {
+                      setState(() {
+                        _isActive = value;
+                      });
+                    },
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 24),
                   CustomButton(
                     text: AppStrings.save,
                     onPressed: _saveProduct,

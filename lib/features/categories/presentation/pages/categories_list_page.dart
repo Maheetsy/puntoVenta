@@ -210,37 +210,27 @@ class _CategoriesListPageState extends State<CategoriesListPage> {
                       ],
                     ),
                   ),
-                  PopupMenuButton(
-                    icon: const Icon(Icons.more_vert),
-                    itemBuilder: (context) => [
-                      PopupMenuItem(
-                        value: 'edit',
-                        child: const Row(
-                          children: [
-                            Icon(Icons.edit, size: 20),
-                            SizedBox(width: 8),
-                            Text(AppStrings.edit),
-                          ],
-                        ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.edit, size: 20),
+                        color: AppColors.primary,
+                        onPressed: () => _navigateToEdit(context, category),
+                        tooltip: AppStrings.edit,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
                       ),
-                      PopupMenuItem(
-                        value: 'delete',
-                        child: const Row(
-                          children: [
-                            Icon(Icons.delete, size: 20, color: AppColors.error),
-                            SizedBox(width: 8),
-                            Text(AppStrings.delete, style: TextStyle(color: AppColors.error)),
-                          ],
-                        ),
+                      const SizedBox(width: 8),
+                      IconButton(
+                        icon: const Icon(Icons.delete, size: 20),
+                        color: AppColors.error,
+                        onPressed: () => _deleteCategory(category['id']),
+                        tooltip: AppStrings.delete,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
                       ),
                     ],
-                    onSelected: (value) {
-                      if (value == 'edit') {
-                        _navigateToEdit(context, category);
-                      } else if (value == 'delete') {
-                        _deleteCategory(category['id']);
-                      }
-                    },
                   ),
                 ],
               ),
@@ -284,7 +274,10 @@ class _CategoriesListPageState extends State<CategoriesListPage> {
         Navigator.pushReplacementNamed(context, AppRoutes.sales);
         break;
       case 4:
-        Navigator.pushReplacementNamed(context, AppRoutes.clients);
+        Navigator.pushReplacementNamed(context, AppRoutes.reports);
+        break;
+      case 5:
+        Navigator.pushReplacementNamed(context, AppRoutes.settings);
         break;
     }
   }

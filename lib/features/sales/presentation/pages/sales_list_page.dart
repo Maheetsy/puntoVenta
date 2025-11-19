@@ -195,19 +195,46 @@ class _SalesListPageState extends State<SalesListPage> {
                       ],
                     ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: statusColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      status,
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: statusColor,
-                        fontWeight: FontWeight.w600,
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: statusColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          status,
+                          style: AppTextStyles.bodySmall.copyWith(
+                            color: statusColor,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ),
-                    ),
+                      const SizedBox(width: 8),
+                      IconButton(
+                        icon: const Icon(Icons.edit, size: 20),
+                        color: AppColors.primary,
+                        onPressed: () {
+                          // TODO: Implementar editar venta
+                        },
+                        tooltip: AppStrings.edit,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                      const SizedBox(width: 4),
+                      IconButton(
+                        icon: const Icon(Icons.delete, size: 20),
+                        color: AppColors.error,
+                        onPressed: () {
+                          // TODO: Implementar eliminar venta
+                        },
+                        tooltip: AppStrings.delete,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -278,7 +305,10 @@ class _SalesListPageState extends State<SalesListPage> {
         Navigator.pushReplacementNamed(context, AppRoutes.sales);
         break;
       case 4:
-        Navigator.pushReplacementNamed(context, AppRoutes.clients);
+        Navigator.pushReplacementNamed(context, AppRoutes.reports);
+        break;
+      case 5:
+        Navigator.pushReplacementNamed(context, AppRoutes.settings);
         break;
     }
   }
