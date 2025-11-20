@@ -5,7 +5,8 @@ class ApiConfig {
   static const String fastApiBaseUrl = 'http://10.0.2.2:8000';
 
   // URL base del API Node.js (MongoDB)
-  static const String nodeApiBaseUrl = 'http://127.0.0.1:3000';
+  static const String nodeApiBaseUrl =
+      'https://backendnodejs-abos.onrender.com';
 
   // Endpoints FastAPI
   static const String productsEndpoint = '/products/';
