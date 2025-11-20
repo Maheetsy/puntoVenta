@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/custom_button.dart';
 import '../../../../core/widgets/custom_text_field.dart';
+import '../../../../core/widgets/animated_snackbar.dart';
 import '../../../../core/errors/exceptions.dart';
 import '../../../../config/di/injection_container.dart';
 import '../../domain/entities/product.dart';
@@ -54,23 +54,32 @@ class _ProductFormPageState extends State<ProductFormPage> {
   }
 
   Future<void> _loadCategories() async {
+    setState(() {
+      _isLoadingCategories = true;
+    });
     try {
       final categories = await _categoryRepository.getCategories();
       setState(() {
         _categories = categories;
         _isLoadingCategories = false;
+        // Si estamos editando y tenemos un producto con categoría, asegurar que esté seleccionada
+        if (widget.product != null && _selectedCategoryId != null) {
+          // Verificar que la categoría seleccionada exista en la lista cargada
+          final categoryExists = categories.any(
+            (cat) => cat.categoryId == _selectedCategoryId,
+          );
+          if (!categoryExists && categories.isNotEmpty) {
+            // Si la categoría no existe, seleccionar la primera disponible
+            _selectedCategoryId = categories.first.categoryId;
+          }
+        }
       });
     } catch (e) {
       setState(() {
         _isLoadingCategories = false;
       });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error al cargar categorías: $e'),
-            backgroundColor: AppColors.error,
-          ),
-        );
+        AnimatedSnackBar.showError(context, 'Error al cargar categorías: $e');
       }
     }
   }
@@ -91,12 +100,7 @@ class _ProductFormPageState extends State<ProductFormPage> {
     }
 
     if (_selectedCategoryId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Por favor seleccione una categoría'),
-          backgroundColor: AppColors.error,
-        ),
-      );
+      AnimatedSnackBar.showError(context, 'Por favor seleccione una categoría');
       return;
     }
 
@@ -131,38 +135,29 @@ class _ProductFormPageState extends State<ProductFormPage> {
       }
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              widget.product == null
-                  ? AppStrings.productCreated
-                  : AppStrings.productUpdated,
-            ),
-            backgroundColor: AppColors.success,
-          ),
+        AnimatedSnackBar.showSuccess(
+          context,
+          widget.product == null
+              ? AppStrings.productCreated
+              : AppStrings.productUpdated,
+          onDismiss: () => Navigator.pop(context, true),
         );
-        Navigator.pop(context);
+        await Future.delayed(const Duration(milliseconds: 500));
+        if (mounted) {
+          Navigator.pop(context, true);
+        }
       }
     } on ValidationException catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message), backgroundColor: AppColors.error),
-        );
+        AnimatedSnackBar.showError(context, e.message);
       }
     } on ServerException catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message), backgroundColor: AppColors.error),
-        );
+        AnimatedSnackBar.showError(context, e.message);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: AppColors.error,
-          ),
-        );
+        AnimatedSnackBar.showError(context, 'Error: $e');
       }
     } finally {
       if (mounted) {

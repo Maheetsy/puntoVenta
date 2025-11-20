@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/widgets/custom_button.dart';
+import '../../../../core/widgets/animated_snackbar.dart';
+import '../../../../core/errors/exceptions.dart';
+import '../../../../config/di/injection_container.dart';
+import '../../../products/domain/entities/product.dart';
+import '../../domain/entities/sale.dart';
 
 class SaleFormPage extends StatefulWidget {
   const SaleFormPage({super.key});
@@ -14,14 +18,15 @@ class SaleFormPage extends StatefulWidget {
 
 class _SaleFormPageState extends State<SaleFormPage> {
   final _formKey = GlobalKey<FormState>();
-  DateTime _saleDate = DateTime.now();
-  String? _selectedUserId;
   String? _selectedStatus = 'Completada';
   String? _selectedPaymentMethod;
   List<Map<String, dynamic>> _saleItems = [];
-  List<Map<String, dynamic>> _products = [];
-  List<Map<String, dynamic>> _users = [];
+  List<Product> _products = [];
   bool _isLoading = false;
+  String? _currentUserId;
+  final _saleRepository = injectionContainer.saleRepository;
+  final _productRepository = injectionContainer.productRepository;
+  final _authRepository = injectionContainer.authRepository;
 
   @override
   void initState() {
@@ -30,32 +35,25 @@ class _SaleFormPageState extends State<SaleFormPage> {
   }
 
   Future<void> _loadData() async {
-    // TODO: Cargar desde el backend
-    setState(() {
-      _products = [
-        {'id': '1', 'name': 'Producto 1', 'price': 99.99, 'stock': 50},
-        {'id': '2', 'name': 'Producto 2', 'price': 149.99, 'stock': 30},
-        {'id': '3', 'name': 'Producto 3', 'price': 79.99, 'stock': 10},
-      ];
-      _users = [
-        {'id': '1', 'name': 'Usuario 1', 'email': 'user1@example.com'},
-        {'id': '2', 'name': 'Usuario 2', 'email': 'user2@example.com'},
-        {'id': '3', 'name': 'Usuario 3', 'email': 'user3@example.com'},
-      ];
-    });
-  }
-
-  Future<void> _selectDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: _saleDate,
-      firstDate: DateTime(2020),
-      lastDate: DateTime.now(),
-    );
-    if (picked != null && picked != _saleDate) {
+    try {
+      final products = await _productRepository.getProducts();
+      final currentUser = await _authRepository.getCurrentUser();
       setState(() {
-        _saleDate = picked;
+        _products = products.where((p) => p.active && p.stock > 0).toList();
+        _currentUserId = currentUser?.id;
       });
+      if (_currentUserId == null) {
+        if (mounted) {
+          AnimatedSnackBar.showError(
+            context,
+            'No se pudo obtener el usuario actual',
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        AnimatedSnackBar.showError(context, 'Error al cargar datos: $e');
+      }
     }
   }
 
@@ -69,7 +67,7 @@ class _SaleFormPageState extends State<SaleFormPage> {
             _saleItems.add({
               'product': product,
               'quantity': quantity,
-              'subtotal': product['price'] * quantity,
+              'subtotal': product.price * quantity,
             });
           });
         },
@@ -92,42 +90,31 @@ class _SaleFormPageState extends State<SaleFormPage> {
       return;
     }
 
-    if (_selectedUserId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Por favor seleccione un usuario'),
-          backgroundColor: AppColors.error,
-        ),
+    if (_currentUserId == null) {
+      AnimatedSnackBar.showError(
+        context,
+        'No se pudo obtener el usuario actual',
       );
       return;
     }
 
     if (_selectedPaymentMethod == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Por favor seleccione un método de pago'),
-          backgroundColor: AppColors.error,
-        ),
+      AnimatedSnackBar.showError(
+        context,
+        'Por favor seleccione un método de pago',
       );
       return;
     }
 
     if (_selectedStatus == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Por favor seleccione un estado'),
-          backgroundColor: AppColors.error,
-        ),
-      );
+      AnimatedSnackBar.showError(context, 'Por favor seleccione un estado');
       return;
     }
 
     if (_saleItems.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Por favor agregue al menos un producto'),
-          backgroundColor: AppColors.error,
-        ),
+      AnimatedSnackBar.showError(
+        context,
+        'Por favor agregue al menos un producto',
       );
       return;
     }
@@ -135,26 +122,50 @@ class _SaleFormPageState extends State<SaleFormPage> {
     setState(() => _isLoading = true);
 
     try {
-      // TODO: Guardar en el backend
-      await Future.delayed(const Duration(seconds: 1));
+      final saleItems = _saleItems.map((item) {
+        final product = item['product'] as Product;
+        return SaleItem(
+          productId: product.productId!,
+          productName: product.name,
+          quantity: item['quantity'] as int,
+          price: product.price,
+          subtotal: item['subtotal'] as double,
+        );
+      }).toList();
+
+      final sale = Sale(
+        saleDate: DateTime.now(), // Fecha actual
+        userId: _currentUserId,
+        status: _selectedStatus!,
+        paymentMethod: _selectedPaymentMethod!,
+        items: saleItems,
+        total: _total,
+      );
+
+      await _saleRepository.createSale(sale);
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text(AppStrings.saleCreated),
-            backgroundColor: AppColors.success,
-          ),
+        AnimatedSnackBar.showSuccess(
+          context,
+          AppStrings.saleCreated,
+          onDismiss: () => Navigator.pop(context, true),
         );
-        Navigator.pop(context);
+        await Future.delayed(const Duration(milliseconds: 500));
+        if (mounted) {
+          Navigator.pop(context, true);
+        }
+      }
+    } on ValidationException catch (e) {
+      if (mounted) {
+        AnimatedSnackBar.showError(context, e.message);
+      }
+    } on ServerException catch (e) {
+      if (mounted) {
+        AnimatedSnackBar.showError(context, e.message);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(AppStrings.errorGeneric),
-            backgroundColor: AppColors.error,
-          ),
-        );
+        AnimatedSnackBar.showError(context, 'Error: $e');
       }
     } finally {
       if (mounted) {
@@ -179,77 +190,6 @@ class _SaleFormPageState extends State<SaleFormPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Fecha de venta
-                  Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Fecha de Venta',
-                            style: AppTextStyles.titleMedium,
-                          ),
-                          const SizedBox(height: 12),
-                          InkWell(
-                            onTap: () => _selectDate(context),
-                            child: InputDecorator(
-                              decoration: const InputDecoration(
-                                labelText: 'Fecha',
-                                prefixIcon: Icon(Icons.calendar_today),
-                                border: OutlineInputBorder(),
-                              ),
-                              child: Text(
-                                DateFormat('yyyy-MM-dd').format(_saleDate),
-                                style: AppTextStyles.bodyMedium,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Usuario
-                  Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Usuario', style: AppTextStyles.titleMedium),
-                          const SizedBox(height: 12),
-                          DropdownButtonFormField<String>(
-                            value: _selectedUserId,
-                            decoration: const InputDecoration(
-                              labelText: 'Usuario',
-                              prefixIcon: Icon(Icons.person),
-                            ),
-                            items: _users.map<DropdownMenuItem<String>>((user) {
-                              return DropdownMenuItem<String>(
-                                value: user['id'] as String,
-                                child: Text(
-                                  '${user['name']} (${user['email']})',
-                                ),
-                              );
-                            }).toList(),
-                            onChanged: (value) {
-                              setState(() => _selectedUserId = value);
-                            },
-                            validator: (value) {
-                              if (value == null) {
-                                return 'El usuario es requerido';
-                              }
-                              return null;
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
                   // Estado
                   Card(
                     child: Padding(
@@ -358,9 +298,11 @@ class _SaleFormPageState extends State<SaleFormPage> {
                                               ),
                                         ),
                                       ),
-                                      title: Text(item['product']['name']),
+                                      title: Text(
+                                        (item['product'] as Product).name,
+                                      ),
                                       subtitle: Text(
-                                        'Cantidad: ${item['quantity']} x \$${item['product']['price'].toStringAsFixed(2)}',
+                                        'Cantidad: ${item['quantity']} x \$${(item['product'] as Product).price.toStringAsFixed(2)}',
                                       ),
                                       trailing: Row(
                                         mainAxisSize: MainAxisSize.min,
@@ -475,8 +417,8 @@ class _SaleFormPageState extends State<SaleFormPage> {
 }
 
 class _ProductSelectionDialog extends StatefulWidget {
-  final List<Map<String, dynamic>> products;
-  final Function(Map<String, dynamic>, int) onProductSelected;
+  final List<Product> products;
+  final Function(Product, int) onProductSelected;
 
   const _ProductSelectionDialog({
     required this.products,
@@ -489,7 +431,7 @@ class _ProductSelectionDialog extends StatefulWidget {
 }
 
 class _ProductSelectionDialogState extends State<_ProductSelectionDialog> {
-  String? _selectedProductId;
+  int? _selectedProductId;
   final TextEditingController _quantityController = TextEditingController(
     text: '1',
   );
@@ -507,17 +449,17 @@ class _ProductSelectionDialogState extends State<_ProductSelectionDialog> {
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          DropdownButtonFormField<String>(
+          DropdownButtonFormField<int>(
             value: _selectedProductId,
             decoration: const InputDecoration(
               labelText: AppStrings.productName,
               prefixIcon: Icon(Icons.inventory_2),
             ),
-            items: widget.products.map<DropdownMenuItem<String>>((product) {
-              return DropdownMenuItem<String>(
-                value: product['id'] as String,
+            items: widget.products.map<DropdownMenuItem<int>>((product) {
+              return DropdownMenuItem<int>(
+                value: product.productId,
                 child: Text(
-                  '${product['name'] as String} - \$${(product['price'] as num).toStringAsFixed(2)}',
+                  '${product.name} - \$${product.price.toStringAsFixed(2)} (Stock: ${product.stock})',
                 ),
               );
             }).toList(),
@@ -545,9 +487,27 @@ class _ProductSelectionDialogState extends State<_ProductSelectionDialog> {
           onPressed: () {
             if (_selectedProductId != null) {
               final product = widget.products.firstWhere(
-                (p) => p['id'] == _selectedProductId,
+                (p) => p.productId == _selectedProductId,
               );
               final quantity = int.tryParse(_quantityController.text) ?? 1;
+              if (quantity <= 0) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('La cantidad debe ser mayor a 0'),
+                  ),
+                );
+                return;
+              }
+              if (quantity > product.stock) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'No hay suficiente stock. Disponible: ${product.stock}',
+                    ),
+                  ),
+                );
+                return;
+              }
               widget.onProductSelected(product, quantity);
               Navigator.pop(context);
             }

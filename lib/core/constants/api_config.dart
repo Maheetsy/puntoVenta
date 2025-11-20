@@ -8,15 +8,14 @@ class ApiConfig {
   // URL base del API Node.js (MongoDB)
   static const String nodeApiBaseUrl =
       'https://backendnodejs-abos.onrender.com';
-
   // Endpoints FastAPI
   static const String productsEndpoint = '/products/';
   static const String categoriesEndpoint = '/categories/';
-  static const String salesEndpoint = '/sales/';
 
   // Endpoints Node.js
   static const String authLoginEndpoint = '/api/auth/login';
   static const String authMeEndpoint = '/api/auth/me';
+  static const String salesEndpoint = '/api/sales';
 
   // Headers
   static Map<String, String> get headers => {

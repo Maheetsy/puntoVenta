@@ -26,4 +26,8 @@ class AppRoutes {
 
   // Configuración
   static const String settings = '/settings';
+
+  // Usuarios
+  static const String users = '/users';
+  static const String createUser = '/users/create';
 }

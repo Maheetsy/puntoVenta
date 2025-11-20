@@ -12,6 +12,7 @@ import 'features/dashboard/presentation/pages/dashboard_page.dart';
 import 'features/products/presentation/pages/products_list_page.dart';
 import 'features/categories/presentation/pages/categories_list_page.dart';
 import 'features/sales/presentation/pages/sales_list_page.dart';
+import 'features/users/presentation/pages/users_list_page.dart';
 import 'features/reports/presentation/pages/reports_page.dart';
 import 'features/configuration/presentation/pages/configuration_page.dart';
 
@@ -30,7 +31,7 @@ Future<void> main() async {
 
   // 4. Convertimos el texto guardado (ej: "dark") a un objeto ThemeMode
   final ThemeMode initialThemeMode = ThemeMode.values.firstWhere(
-        (e) => e.name == themeName,
+    (e) => e.name == themeName,
     orElse: () => ThemeMode.light,
   );
 
@@ -65,8 +66,8 @@ class MyApp extends StatelessWidget {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: themeManager.themeMode, // <-- ¡LA MAGIA OCURRE AQUÍ!
-      // -----------------------
 
+      // -----------------------
       initialRoute: initialRoute,
       routes: {
         AppRoutes.login: (context) => const LoginPage(),
@@ -74,6 +75,7 @@ class MyApp extends StatelessWidget {
         AppRoutes.products: (context) => const ProductsListPage(),
         AppRoutes.categories: (context) => const CategoriesListPage(),
         AppRoutes.sales: (context) => const SalesListPage(),
+        AppRoutes.users: (context) => const UsersListPage(),
         AppRoutes.reports: (context) => const ReportsPage(),
         AppRoutes.settings: (context) => const ConfigurationPage(),
       },

@@ -4,8 +4,11 @@ import '../../../../core/constants/app_routes.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/widgets/responsive_layout.dart';
+import '../../../../core/widgets/animated_snackbar.dart';
+import '../../../../core/errors/exceptions.dart';
+import '../../../../config/di/injection_container.dart';
+import '../../domain/entities/sale.dart';
 import 'sale_form_page.dart';
-import 'sale_detail_page.dart';
 
 class SalesListPage extends StatefulWidget {
   const SalesListPage({super.key});
@@ -16,9 +19,11 @@ class SalesListPage extends StatefulWidget {
 
 class _SalesListPageState extends State<SalesListPage> {
   final TextEditingController _searchController = TextEditingController();
-  List<Map<String, dynamic>> _sales = [];
-  List<Map<String, dynamic>> _filteredSales = [];
+  final _saleRepository = injectionContainer.saleRepository;
+  List<Sale> _sales = [];
+  List<Sale> _filteredSales = [];
   bool _isLoading = true;
+  String? _errorMessage;
 
   @override
   void initState() {
@@ -34,51 +39,51 @@ class _SalesListPageState extends State<SalesListPage> {
   }
 
   Future<void> _loadSales() async {
-    setState(() => _isLoading = true);
-    // TODO: Cargar desde el backend
-    await Future.delayed(const Duration(seconds: 1));
     setState(() {
-      _sales = [
-        {
-          'id': '1',
-          'number': 'V-001',
-          'date': '2024-01-15',
-          'client': 'Juan Pérez',
-          'total': 299.99,
-          'status': 'Completada',
-          'paymentMethod': 'Efectivo',
-        },
-        {
-          'id': '2',
-          'number': 'V-002',
-          'date': '2024-01-16',
-          'client': 'María García',
-          'total': 449.99,
-          'status': 'Completada',
-          'paymentMethod': 'Tarjeta',
-        },
-        {
-          'id': '3',
-          'number': 'V-003',
-          'date': '2024-01-17',
-          'client': 'Carlos López',
-          'total': 179.99,
-          'status': 'Pendiente',
-          'paymentMethod': 'Transferencia',
-        },
-      ];
-      _filteredSales = _sales;
-      _isLoading = false;
+      _isLoading = true;
+      _errorMessage = null;
     });
+
+    try {
+      final sales = await _saleRepository.getSales();
+      setState(() {
+        _sales = sales;
+        _filteredSales = sales;
+        _isLoading = false;
+      });
+    } on ServerException catch (e) {
+      setState(() {
+        _errorMessage = e.message;
+        _isLoading = false;
+      });
+      if (mounted) {
+        AnimatedSnackBar.showError(context, e.message);
+      }
+    } on NetworkException catch (e) {
+      setState(() {
+        _errorMessage = 'Error de conexión. Verifique su internet.';
+        _isLoading = false;
+      });
+      if (mounted) {
+        AnimatedSnackBar.showError(context, e.message);
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Error inesperado: $e';
+        _isLoading = false;
+      });
+    }
   }
 
   void _filterSales() {
     final query = _searchController.text.toLowerCase();
     setState(() {
       _filteredSales = _sales.where((sale) {
-        return sale['number'].toString().toLowerCase().contains(query) ||
-            sale['client'].toString().toLowerCase().contains(query) ||
-            sale['date'].toString().toLowerCase().contains(query);
+        return sale.userName?.toLowerCase().contains(query) ??
+            false ||
+                sale.saleDate.toString().toLowerCase().contains(query) ||
+                sale.status.toLowerCase().contains(query) ||
+                sale.total.toString().contains(query);
       }).toList();
     });
   }
@@ -127,44 +132,74 @@ class _SalesListPageState extends State<SalesListPage> {
         Expanded(
           child: _isLoading
               ? const Center(child: CircularProgressIndicator())
-              : _filteredSales.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.shopping_cart, size: 64, color: AppColors.textSecondary),
-                          const SizedBox(height: 16),
-                          Text(
-                            _searchController.text.isEmpty
-                                ? AppStrings.noSales
-                                : 'No se encontraron ventas',
-                            style: AppTextStyles.bodyLarge.copyWith(
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                        ],
+              : _errorMessage != null
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.error_outline,
+                        size: 64,
+                        color: AppColors.error,
                       ),
-                    )
-                  : ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: _filteredSales.length,
-                      itemBuilder: (context, index) {
-                        final sale = _filteredSales[index];
-                        return _buildSaleCard(context, sale, isMobile);
-                      },
-                    ),
+                      const SizedBox(height: 16),
+                      Text(
+                        _errorMessage!,
+                        style: AppTextStyles.bodyLarge.copyWith(
+                          color: AppColors.error,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: _loadSales,
+                        child: const Text('Reintentar'),
+                      ),
+                    ],
+                  ),
+                )
+              : _filteredSales.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.shopping_cart,
+                        size: 64,
+                        color: AppColors.textSecondary,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        _searchController.text.isEmpty
+                            ? AppStrings.noSales
+                            : 'No se encontraron ventas',
+                        style: AppTextStyles.bodyLarge.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: _filteredSales.length,
+                  itemBuilder: (context, index) {
+                    final sale = _filteredSales[index];
+                    return _buildSaleCard(context, sale, isMobile);
+                  },
+                ),
         ),
       ],
     );
   }
 
-  Widget _buildSaleCard(BuildContext context, Map<String, dynamic> sale, bool isMobile) {
-    final status = sale['status'] as String;
+  Widget _buildSaleCard(BuildContext context, Sale sale, bool isMobile) {
+    final status = sale.status;
     final statusColor = status == 'Completada'
         ? AppColors.success
         : status == 'Pendiente'
-            ? AppColors.warning
-            : AppColors.error;
+        ? AppColors.warning
+        : AppColors.error;
 
     return Card(
       elevation: 2,
@@ -184,12 +219,14 @@ class _SalesListPageState extends State<SalesListPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          sale['number'],
+                          sale.saleId != null
+                              ? 'V-${sale.saleId!.substring(0, sale.saleId!.length > 8 ? 8 : sale.saleId!.length).toUpperCase()}'
+                              : 'V-N/A',
                           style: AppTextStyles.titleMedium,
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          sale['client'],
+                          sale.userName ?? 'Usuario no disponible',
                           style: AppTextStyles.bodyMedium,
                         ),
                       ],
@@ -199,7 +236,10 @@ class _SalesListPageState extends State<SalesListPage> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: statusColor.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(12),
@@ -246,18 +286,18 @@ class _SalesListPageState extends State<SalesListPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Fecha: ${sale['date']}',
+                        'Fecha: ${sale.saleDate.toLocal().toString().split(' ')[0]}',
                         style: AppTextStyles.bodySmall,
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Método: ${sale['paymentMethod']}',
+                        'Método: ${sale.paymentMethod}',
                         style: AppTextStyles.bodySmall,
                       ),
                     ],
                   ),
                   Text(
-                    '\$${sale['total'].toStringAsFixed(2)}',
+                    '\$${sale.total.toStringAsFixed(2)}',
                     style: AppTextStyles.priceCard.copyWith(
                       color: AppColors.primary,
                       fontWeight: FontWeight.bold,
@@ -275,19 +315,18 @@ class _SalesListPageState extends State<SalesListPage> {
   void _navigateToCreate(BuildContext context) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const SaleFormPage(),
-      ),
+      MaterialPageRoute(builder: (context) => const SaleFormPage()),
     ).then((_) => _loadSales());
   }
 
-  void _navigateToDetail(BuildContext context, Map<String, dynamic> sale) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => SaleDetailPage(sale: sale),
-      ),
-    );
+  void _navigateToDetail(BuildContext context, Sale sale) {
+    // TODO: Implementar página de detalle de venta
+    // Navigator.push(
+    //   context,
+    //   MaterialPageRoute(
+    //     builder: (context) => SaleDetailPage(sale: sale),
+    //   ),
+    // );
   }
 
   void _navigateToPage(BuildContext context, int index) {
@@ -305,12 +344,14 @@ class _SalesListPageState extends State<SalesListPage> {
         Navigator.pushReplacementNamed(context, AppRoutes.sales);
         break;
       case 4:
-        Navigator.pushReplacementNamed(context, AppRoutes.reports);
+        Navigator.pushReplacementNamed(context, AppRoutes.users);
         break;
       case 5:
+        Navigator.pushReplacementNamed(context, AppRoutes.reports);
+        break;
+      case 6:
         Navigator.pushReplacementNamed(context, AppRoutes.settings);
         break;
     }
   }
 }
-

@@ -9,6 +9,12 @@ import '../../features/categories/domain/repositories/category_repository.dart';
 import '../../features/auth/data/datasources/auth_remote_datasource.dart';
 import '../../features/auth/data/repositories/auth_repository_impl.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
+import '../../features/users/data/datasources/user_remote_datasource.dart';
+import '../../features/users/data/repositories/user_repository_impl.dart';
+import '../../features/users/domain/repositories/user_repository.dart';
+import '../../features/sales/data/datasources/sale_remote_datasource.dart';
+import '../../features/sales/data/repositories/sale_repository_impl.dart';
+import '../../features/sales/domain/repositories/sale_repository.dart';
 
 class InjectionContainer {
   static final InjectionContainer _instance = InjectionContainer._internal();
@@ -26,6 +32,10 @@ class InjectionContainer {
       CategoryRemoteDataSourceImpl(apiClient: _apiClient);
   late final AuthRemoteDataSource _authRemoteDataSource =
       AuthRemoteDataSourceImpl(apiClient: _nodeApiClient);
+  late final UserRemoteDataSource _userRemoteDataSource =
+      UserRemoteDataSourceImpl(apiClient: _nodeApiClient);
+  late final SaleRemoteDataSource _saleRemoteDataSource =
+      SaleRemoteDataSourceImpl(apiClient: _nodeApiClient);
 
   // Repositories
   ProductRepository get productRepository =>
@@ -34,7 +44,10 @@ class InjectionContainer {
       CategoryRepositoryImpl(remoteDataSource: _categoryRemoteDataSource);
   AuthRepository get authRepository =>
       AuthRepositoryImpl(remoteDataSource: _authRemoteDataSource);
+  UserRepository get userRepository =>
+      UserRepositoryImpl(remoteDataSource: _userRemoteDataSource);
+  SaleRepository get saleRepository =>
+      SaleRepositoryImpl(remoteDataSource: _saleRemoteDataSource);
 }
 
 final injectionContainer = InjectionContainer();
-

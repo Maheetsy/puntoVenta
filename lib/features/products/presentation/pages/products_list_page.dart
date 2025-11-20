@@ -4,6 +4,7 @@ import '../../../../core/constants/app_routes.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/widgets/responsive_layout.dart';
+import '../../../../core/widgets/animated_snackbar.dart';
 import '../../../../core/errors/exceptions.dart';
 import '../../../../config/di/injection_container.dart';
 import '../../domain/entities/product.dart';
@@ -56,12 +57,7 @@ class _ProductsListPageState extends State<ProductsListPage> {
         _isLoading = false;
       });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.message),
-            backgroundColor: AppColors.error,
-          ),
-        );
+        AnimatedSnackBar.showError(context, e.message);
       }
     } on NetworkException catch (e) {
       setState(() {
@@ -69,12 +65,7 @@ class _ProductsListPageState extends State<ProductsListPage> {
         _isLoading = false;
       });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.message),
-            backgroundColor: AppColors.error,
-          ),
-        );
+        AnimatedSnackBar.showError(context, e.message);
       }
     } catch (e) {
       setState(() {
@@ -112,35 +103,27 @@ class _ProductsListPageState extends State<ProductsListPage> {
               try {
                 await _productRepository.deleteProduct(productId);
                 if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(AppStrings.productDeleted),
-                      backgroundColor: AppColors.success,
-                    ),
+                  AnimatedSnackBar.showSuccess(
+                    context,
+                    AppStrings.productDeleted,
+                    onDismiss: () => _loadProducts(),
                   );
                   _loadProducts();
                 }
               } on ServerException catch (e) {
                 if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(e.message),
-                      backgroundColor: AppColors.error,
-                    ),
-                  );
+                  AnimatedSnackBar.showError(context, e.message);
                 }
               } catch (e) {
                 if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Error al eliminar: $e'),
-                      backgroundColor: AppColors.error,
-                    ),
-                  );
+                  AnimatedSnackBar.showError(context, 'Error al eliminar: $e');
                 }
               }
             },
-            child: const Text(AppStrings.delete, style: TextStyle(color: AppColors.error)),
+            child: const Text(
+              AppStrings.delete,
+              style: TextStyle(color: AppColors.error),
+            ),
           ),
         ],
       ),
@@ -151,7 +134,13 @@ class _ProductsListPageState extends State<ProductsListPage> {
     final quantityController = TextEditingController();
     final noteController = TextEditingController();
     String? selectedCategory;
-    final categories = ['Reabastecimiento de inventario', 'Ajuste de inventario', 'Devolución', 'Pérdida', 'Otro'];
+    final categories = [
+      'Reabastecimiento de inventario',
+      'Ajuste de inventario',
+      'Devolución',
+      'Pérdida',
+      'Otro',
+    ];
     bool isAdd = true;
 
     showDialog(
@@ -204,10 +193,7 @@ class _ProductsListPageState extends State<ProductsListPage> {
                     prefixIcon: Icon(Icons.category),
                   ),
                   items: categories.map((cat) {
-                    return DropdownMenuItem(
-                      value: cat,
-                      child: Text(cat),
-                    );
+                    return DropdownMenuItem(value: cat, child: Text(cat));
                   }).toList(),
                   onChanged: (value) {
                     setModalState(() => selectedCategory = value);
@@ -235,13 +221,17 @@ class _ProductsListPageState extends State<ProductsListPage> {
                 final quantity = int.tryParse(quantityController.text);
                 if (quantity == null || quantity <= 0) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Por favor ingrese una cantidad válida')),
+                    const SnackBar(
+                      content: Text('Por favor ingrese una cantidad válida'),
+                    ),
                   );
                   return;
                 }
                 if (selectedCategory == null) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Por favor seleccione una categoría')),
+                    const SnackBar(
+                      content: Text('Por favor seleccione una categoría'),
+                    ),
                   );
                   return;
                 }
@@ -249,36 +239,29 @@ class _ProductsListPageState extends State<ProductsListPage> {
                 Navigator.pop(context);
                 try {
                   final quantityToUpdate = isAdd ? quantity : -quantity;
-                  await _productRepository.updateStock(product.productId!, quantityToUpdate);
+                  await _productRepository.updateStock(
+                    product.productId!,
+                    quantityToUpdate,
+                  );
                   if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          isAdd
-                              ? 'Se agregaron $quantity unidades al inventario'
-                              : 'Se quitaron $quantity unidades del inventario',
-                        ),
-                        backgroundColor: AppColors.success,
-                      ),
+                    AnimatedSnackBar.showSuccess(
+                      context,
+                      isAdd
+                          ? 'Se agregaron $quantity unidades al inventario'
+                          : 'Se quitaron $quantity unidades del inventario',
+                      onDismiss: () => _loadProducts(),
                     );
                     _loadProducts();
                   }
                 } on ValidationException catch (e) {
                   if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(e.message),
-                        backgroundColor: AppColors.error,
-                      ),
-                    );
+                    AnimatedSnackBar.showError(context, e.message);
                   }
                 } catch (e) {
                   if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Error al actualizar stock: $e'),
-                        backgroundColor: AppColors.error,
-                      ),
+                    AnimatedSnackBar.showError(
+                      context,
+                      'Error al actualizar stock: $e',
                     );
                   }
                 }
@@ -336,80 +319,92 @@ class _ProductsListPageState extends State<ProductsListPage> {
           child: _isLoading
               ? const Center(child: CircularProgressIndicator())
               : _errorMessage != null
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.error_outline, size: 64, color: AppColors.error),
-                          const SizedBox(height: 16),
-                          Text(
-                            _errorMessage!,
-                            style: AppTextStyles.bodyLarge.copyWith(
-                              color: AppColors.error,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 16),
-                          ElevatedButton(
-                            onPressed: _loadProducts,
-                            child: const Text('Reintentar'),
-                          ),
-                        ],
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.error_outline,
+                        size: 64,
+                        color: AppColors.error,
                       ),
-                    )
-                  : _filteredProducts.isEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.inventory_2, size: 64, color: AppColors.textSecondary),
-                              const SizedBox(height: 16),
-                              Text(
-                                _searchController.text.isEmpty
-                                    ? AppStrings.noProducts
-                                    : 'No se encontraron productos',
-                                style: AppTextStyles.bodyLarge.copyWith(
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        )
-                  : isMobile
-                      ? ListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          itemCount: _filteredProducts.length,
-                          itemBuilder: (context, index) {
-                            final product = _filteredProducts[index];
-                            return _buildProductCard(context, product, isMobile);
-                          },
-                        )
-                      : GridView.builder(
-                          padding: const EdgeInsets.all(16),
-                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 3,
-                            crossAxisSpacing: 16,
-                            mainAxisSpacing: 16,
-                            childAspectRatio: 0.8,
-                          ),
-                          itemCount: _filteredProducts.length,
-                          itemBuilder: (context, index) {
-                            final product = _filteredProducts[index];
-                            return _buildProductCard(context, product, isMobile);
-                          },
+                      const SizedBox(height: 16),
+                      Text(
+                        _errorMessage!,
+                        style: AppTextStyles.bodyLarge.copyWith(
+                          color: AppColors.error,
                         ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: _loadProducts,
+                        child: const Text('Reintentar'),
+                      ),
+                    ],
+                  ),
+                )
+              : _filteredProducts.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.inventory_2,
+                        size: 64,
+                        color: AppColors.textSecondary,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        _searchController.text.isEmpty
+                            ? AppStrings.noProducts
+                            : 'No se encontraron productos',
+                        style: AppTextStyles.bodyLarge.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : isMobile
+              ? ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: _filteredProducts.length,
+                  itemBuilder: (context, index) {
+                    final product = _filteredProducts[index];
+                    return _buildProductCard(context, product, isMobile);
+                  },
+                )
+              : GridView.builder(
+                  padding: const EdgeInsets.all(16),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                    childAspectRatio: 0.8,
+                  ),
+                  itemCount: _filteredProducts.length,
+                  itemBuilder: (context, index) {
+                    final product = _filteredProducts[index];
+                    return _buildProductCard(context, product, isMobile);
+                  },
+                ),
         ),
       ],
     );
   }
 
-  Widget _buildProductCard(BuildContext context, Product product, bool isMobile) {
+  Widget _buildProductCard(
+    BuildContext context,
+    Product product,
+    bool isMobile,
+  ) {
     final stock = product.stock;
     final stockColor = stock > 20
         ? AppColors.success
         : stock > 10
-            ? AppColors.warning
-            : AppColors.error;
+        ? AppColors.warning
+        : AppColors.error;
 
     return Card(
       elevation: 2,
@@ -459,7 +454,9 @@ class _ProductsListPageState extends State<ProductsListPage> {
                       IconButton(
                         icon: const Icon(Icons.delete, size: 20),
                         color: AppColors.error,
-                        onPressed: () => product.productId != null ? _deleteProduct(product.productId!) : null,
+                        onPressed: () => product.productId != null
+                            ? _deleteProduct(product.productId!)
+                            : null,
                         tooltip: AppStrings.delete,
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(),
@@ -469,14 +466,16 @@ class _ProductsListPageState extends State<ProductsListPage> {
                 ],
               ),
               const SizedBox(height: 8),
-              if (product.description != null && product.description!.isNotEmpty)
+              if (product.description != null &&
+                  product.description!.isNotEmpty)
                 Text(
                   product.description!,
                   style: AppTextStyles.bodySmall,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-              if (product.description != null && product.description!.isNotEmpty)
+              if (product.description != null &&
+                  product.description!.isNotEmpty)
                 const SizedBox(height: 8),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -493,7 +492,10 @@ class _ProductsListPageState extends State<ProductsListPage> {
                       if (!product.active)
                         Container(
                           margin: const EdgeInsets.only(top: 4),
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: AppColors.error.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(4),
@@ -512,7 +514,10 @@ class _ProductsListPageState extends State<ProductsListPage> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: stockColor.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(4),
@@ -548,10 +553,12 @@ class _ProductsListPageState extends State<ProductsListPage> {
   void _navigateToCreate(BuildContext context) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const ProductFormPage(),
-      ),
-    ).then((_) => _loadProducts());
+      MaterialPageRoute(builder: (context) => const ProductFormPage()),
+    ).then((result) {
+      if (result == true) {
+        _loadProducts();
+      }
+    });
   }
 
   void _navigateToEdit(BuildContext context, Product product) {
@@ -560,7 +567,11 @@ class _ProductsListPageState extends State<ProductsListPage> {
       MaterialPageRoute(
         builder: (context) => ProductFormPage(product: product),
       ),
-    ).then((_) => _loadProducts());
+    ).then((result) {
+      if (result == true) {
+        _loadProducts();
+      }
+    });
   }
 
   void _navigateToPage(BuildContext context, int index) {
@@ -578,12 +589,14 @@ class _ProductsListPageState extends State<ProductsListPage> {
         Navigator.pushReplacementNamed(context, AppRoutes.sales);
         break;
       case 4:
-        Navigator.pushReplacementNamed(context, AppRoutes.reports);
+        Navigator.pushReplacementNamed(context, AppRoutes.users);
         break;
       case 5:
+        Navigator.pushReplacementNamed(context, AppRoutes.reports);
+        break;
+      case 6:
         Navigator.pushReplacementNamed(context, AppRoutes.settings);
         break;
     }
   }
 }
-

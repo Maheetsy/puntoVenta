@@ -45,7 +45,9 @@ class ReportsPage extends StatelessWidget {
       case 4: // Reports
         // No hacer nada si ya estamos aquí
         break;
-      case 5: // Configuration
+      case 5: // Reports
+        break;
+      case 6: // Configuration
         if (currentRoute != AppRoutes.settings)
           Navigator.pushReplacementNamed(context, AppRoutes.settings);
         break;

@@ -188,10 +188,7 @@ class DashboardPage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Ventas Semanales',
-                      style: AppTextStyles.titleLarge,
-                    ),
+                    Text('Ventas Semanales', style: AppTextStyles.titleLarge),
                     const SizedBox(height: 16),
                     SizedBox(
                       height: 200,
@@ -206,8 +203,17 @@ class DashboardPage extends StatelessWidget {
                               sideTitles: SideTitles(
                                 showTitles: true,
                                 getTitlesWidget: (value, meta) {
-                                  const days = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
-                                  if (value.toInt() >= 0 && value.toInt() < days.length) {
+                                  const days = [
+                                    'Lun',
+                                    'Mar',
+                                    'Mié',
+                                    'Jue',
+                                    'Vie',
+                                    'Sáb',
+                                    'Dom',
+                                  ];
+                                  if (value.toInt() >= 0 &&
+                                      value.toInt() < days.length) {
                                     return Text(
                                       days[value.toInt()],
                                       style: AppTextStyles.bodySmall,
@@ -230,27 +236,76 @@ class DashboardPage extends StatelessWidget {
                           gridData: FlGridData(show: false),
                           borderData: FlBorderData(show: false),
                           barGroups: [
-                            BarChartGroupData(x: 0, barRods: [
-                              BarChartRodData(toY: 6, color: AppColors.primary, width: 20)
-                            ]),
-                            BarChartGroupData(x: 1, barRods: [
-                              BarChartRodData(toY: 8, color: AppColors.primary, width: 20)
-                            ]),
-                            BarChartGroupData(x: 2, barRods: [
-                              BarChartRodData(toY: 5, color: AppColors.primary, width: 20)
-                            ]),
-                            BarChartGroupData(x: 3, barRods: [
-                              BarChartRodData(toY: 7, color: AppColors.primary, width: 20)
-                            ]),
-                            BarChartGroupData(x: 4, barRods: [
-                              BarChartRodData(toY: 9, color: AppColors.primary, width: 20)
-                            ]),
-                            BarChartGroupData(x: 5, barRods: [
-                              BarChartRodData(toY: 8, color: AppColors.primary, width: 20)
-                            ]),
-                            BarChartGroupData(x: 6, barRods: [
-                              BarChartRodData(toY: 7, color: AppColors.primary, width: 20)
-                            ]),
+                            BarChartGroupData(
+                              x: 0,
+                              barRods: [
+                                BarChartRodData(
+                                  toY: 6,
+                                  color: AppColors.primary,
+                                  width: 20,
+                                ),
+                              ],
+                            ),
+                            BarChartGroupData(
+                              x: 1,
+                              barRods: [
+                                BarChartRodData(
+                                  toY: 8,
+                                  color: AppColors.primary,
+                                  width: 20,
+                                ),
+                              ],
+                            ),
+                            BarChartGroupData(
+                              x: 2,
+                              barRods: [
+                                BarChartRodData(
+                                  toY: 5,
+                                  color: AppColors.primary,
+                                  width: 20,
+                                ),
+                              ],
+                            ),
+                            BarChartGroupData(
+                              x: 3,
+                              barRods: [
+                                BarChartRodData(
+                                  toY: 7,
+                                  color: AppColors.primary,
+                                  width: 20,
+                                ),
+                              ],
+                            ),
+                            BarChartGroupData(
+                              x: 4,
+                              barRods: [
+                                BarChartRodData(
+                                  toY: 9,
+                                  color: AppColors.primary,
+                                  width: 20,
+                                ),
+                              ],
+                            ),
+                            BarChartGroupData(
+                              x: 5,
+                              barRods: [
+                                BarChartRodData(
+                                  toY: 8,
+                                  color: AppColors.primary,
+                                  width: 20,
+                                ),
+                              ],
+                            ),
+                            BarChartGroupData(
+                              x: 6,
+                              barRods: [
+                                BarChartRodData(
+                                  toY: 7,
+                                  color: AppColors.primary,
+                                  width: 20,
+                                ),
+                              ],
+                            ),
                           ],
                         ),
                       ),
@@ -263,20 +318,14 @@ class DashboardPage extends StatelessWidget {
           if (!isMobile) const SizedBox(height: 24),
 
           // Ventas recientes
-          Text(
-            AppStrings.recentSales,
-            style: AppTextStyles.headlineMedium,
-          ),
+          Text(AppStrings.recentSales, style: AppTextStyles.headlineMedium),
           const SizedBox(height: 16),
           _buildRecentSales(context),
 
           const SizedBox(height: 24),
 
           // Productos más vendidos
-          Text(
-            AppStrings.topProducts,
-            style: AppTextStyles.headlineMedium,
-          ),
+          Text(AppStrings.topProducts, style: AppTextStyles.headlineMedium),
           const SizedBox(height: 16),
           _buildTopProducts(context),
         ],
@@ -285,12 +334,12 @@ class DashboardPage extends StatelessWidget {
   }
 
   Widget _buildStatCard(
-      BuildContext context, {
-        required String title,
-        required String value,
-        required IconData icon,
-        required Color color,
-      }) {
+    BuildContext context, {
+    required String title,
+    required String value,
+    required IconData icon,
+    required Color color,
+  }) {
     return Card(
       elevation: 2,
       child: Padding(
@@ -304,12 +353,19 @@ class DashboardPage extends StatelessWidget {
               children: [
                 Icon(icon, size: 32, color: color),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: color.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(4),
                   ),
-                  child: const Icon(Icons.trending_up, size: 16, color: AppColors.success),
+                  child: const Icon(
+                    Icons.trending_up,
+                    size: 16,
+                    color: AppColors.success,
+                  ),
                 ),
               ],
             ),
@@ -423,16 +479,21 @@ class DashboardPage extends StatelessWidget {
         }
         break;
       case 4:
+        if (currentRoute != AppRoutes.users) {
+          Navigator.pushReplacementNamed(context, AppRoutes.users);
+        }
+        break;
+      case 5:
         if (currentRoute != AppRoutes.reports) {
           Navigator.pushReplacementNamed(context, AppRoutes.reports);
         }
         break;
-      case 5:
+      case 6:
         if (currentRoute != AppRoutes.settings) {
           Navigator.pushReplacementNamed(context, AppRoutes.settings);
         }
         break;
-    // ----------------------------------------
+      // ----------------------------------------
     }
   }
 }

@@ -29,6 +29,7 @@ class AppStrings {
   static const String navCategories = 'Categorías';
   static const String navSales = 'Ventas';
   static const String navClients = 'Clientes';
+  static const String navUsers = 'Usuarios';
   static const String navReports = 'Reportes';
   static const String navSettings = 'Configuración';
 
@@ -56,7 +57,8 @@ class AppStrings {
   static const String productCreated = 'Producto creado exitosamente';
   static const String productUpdated = 'Producto actualizado exitosamente';
   static const String productDeleted = 'Producto eliminado exitosamente';
-  static const String deleteProductConfirm = '¿Está seguro de eliminar este producto?';
+  static const String deleteProductConfirm =
+      '¿Está seguro de eliminar este producto?';
   static const String noProducts = 'No hay productos registrados';
 
   // ============== CATEGORÍAS ==============
@@ -69,7 +71,8 @@ class AppStrings {
   static const String categoryCreated = 'Categoría creada exitosamente';
   static const String categoryUpdated = 'Categoría actualizada exitosamente';
   static const String categoryDeleted = 'Categoría eliminada exitosamente';
-  static const String deleteCategoryConfirm = '¿Está seguro de eliminar esta categoría?';
+  static const String deleteCategoryConfirm =
+      '¿Está seguro de eliminar esta categoría?';
   static const String noCategories = 'No hay categorías registradas';
 
   // ============== CLIENTES ==============
@@ -84,7 +87,8 @@ class AppStrings {
   static const String clientCreated = 'Cliente creado exitosamente';
   static const String clientUpdated = 'Cliente actualizado exitosamente';
   static const String clientDeleted = 'Cliente eliminado exitosamente';
-  static const String deleteClientConfirm = '¿Está seguro de eliminar este cliente?';
+  static const String deleteClientConfirm =
+      '¿Está seguro de eliminar este cliente?';
   static const String noClients = 'No hay clientes registrados';
 
   // ============== VENTAS ==============
@@ -110,11 +114,14 @@ class AppStrings {
   static const String transfer = 'Transferencia';
 
   // ============== MENSAJES DE ERROR ==============
-  static const String errorGeneric = 'Ocurrió un error. Por favor, intente nuevamente';
+  static const String errorGeneric =
+      'Ocurrió un error. Por favor, intente nuevamente';
   static const String errorNetwork = 'Error de conexión. Verifique su internet';
   static const String errorNotFound = 'No se encontró el recurso solicitado';
-  static const String errorUnauthorized = 'No tiene permisos para realizar esta acción';
-  static const String errorValidation = 'Por favor, complete todos los campos correctamente';
+  static const String errorUnauthorized =
+      'No tiene permisos para realizar esta acción';
+  static const String errorValidation =
+      'Por favor, complete todos los campos correctamente';
 
   // ============== MENSAJES DE ÉXITO ==============
   static const String successGeneric = 'Operación realizada exitosamente';
@@ -122,4 +129,3 @@ class AppStrings {
   static const String successDelete = 'Eliminado exitosamente';
   static const String successUpdate = 'Actualizado exitosamente';
 }
-

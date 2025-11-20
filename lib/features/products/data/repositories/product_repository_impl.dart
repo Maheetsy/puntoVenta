@@ -3,6 +3,7 @@ import '../../domain/repositories/product_repository.dart';
 import '../../domain/entities/product.dart';
 import '../datasources/product_remote_datasource.dart';
 import '../models/product_model.dart';
+import '../../../../config/di/injection_container.dart';
 
 class ProductRepositoryImpl implements ProductRepository {
   final ProductRemoteDataSource remoteDataSource;
@@ -13,7 +14,47 @@ class ProductRepositoryImpl implements ProductRepository {
   Future<List<Product>> getProducts() async {
     try {
       final models = await remoteDataSource.getProducts();
-      return models.map((model) => _modelToEntity(model)).toList();
+      final products = models.map((model) => _modelToEntity(model)).toList();
+
+      // Si algún producto no tiene categoryName, intentar obtenerlo desde las categorías
+      final productsWithoutCategory = products
+          .where((p) => p.categoryName == null || p.categoryName!.isEmpty)
+          .toList();
+      if (productsWithoutCategory.isNotEmpty) {
+        try {
+          final categories = await injectionContainer.categoryRepository
+              .getCategories();
+          final categoryMap = {
+            for (var cat in categories) cat.categoryId: cat.name,
+          };
+
+          // Reconstruir la lista de productos con las categorías mapeadas
+          return products.map((product) {
+            if ((product.categoryName == null ||
+                    product.categoryName!.isEmpty) &&
+                categoryMap.containsKey(product.categoryId)) {
+              return Product(
+                productId: product.productId,
+                name: product.name,
+                description: product.description,
+                price: product.price,
+                stock: product.stock,
+                imagenUrl: product.imagenUrl,
+                active: product.active,
+                categoryId: product.categoryId,
+                categoryName: categoryMap[product.categoryId],
+                createdAt: product.createdAt,
+                updatedAt: product.updatedAt,
+              );
+            }
+            return product;
+          }).toList();
+        } catch (e) {
+          // Si falla obtener categorías, continuar sin ellas
+        }
+      }
+
+      return products;
     } on ServerException {
       rethrow;
     } catch (e) {
@@ -98,7 +139,8 @@ class ProductRepositoryImpl implements ProductRepository {
       final newStock = currentProduct.stock + quantity;
       if (newStock < 0) {
         throw ValidationException(
-          message: 'No se puede tener stock negativo. Stock actual: ${currentProduct.stock}',
+          message:
+              'No se puede tener stock negativo. Stock actual: ${currentProduct.stock}',
         );
       }
 
@@ -157,4 +199,3 @@ class ProductRepositoryImpl implements ProductRepository {
     );
   }
 }
-

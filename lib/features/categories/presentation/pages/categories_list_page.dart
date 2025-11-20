@@ -57,10 +57,7 @@ class _CategoriesListPageState extends State<CategoriesListPage> {
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.message),
-            backgroundColor: AppColors.error,
-          ),
+          SnackBar(content: Text(e.message), backgroundColor: AppColors.error),
         );
       }
     } on NetworkException catch (e) {
@@ -70,10 +67,7 @@ class _CategoriesListPageState extends State<CategoriesListPage> {
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.message),
-            backgroundColor: AppColors.error,
-          ),
+          SnackBar(content: Text(e.message), backgroundColor: AppColors.error),
         );
       }
     } catch (e) {
@@ -139,7 +133,10 @@ class _CategoriesListPageState extends State<CategoriesListPage> {
                 }
               }
             },
-            child: const Text(AppStrings.delete, style: TextStyle(color: AppColors.error)),
+            child: const Text(
+              AppStrings.delete,
+              style: TextStyle(color: AppColors.error),
+            ),
           ),
         ],
       ),
@@ -191,74 +188,86 @@ class _CategoriesListPageState extends State<CategoriesListPage> {
           child: _isLoading
               ? const Center(child: CircularProgressIndicator())
               : _errorMessage != null
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.error_outline, size: 64, color: AppColors.error),
-                          const SizedBox(height: 16),
-                          Text(
-                            _errorMessage!,
-                            style: AppTextStyles.bodyLarge.copyWith(
-                              color: AppColors.error,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 16),
-                          ElevatedButton(
-                            onPressed: _loadCategories,
-                            child: const Text('Reintentar'),
-                          ),
-                        ],
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.error_outline,
+                        size: 64,
+                        color: AppColors.error,
                       ),
-                    )
-                  : _filteredCategories.isEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.category, size: 64, color: AppColors.textSecondary),
-                              const SizedBox(height: 16),
-                              Text(
-                                _searchController.text.isEmpty
-                                    ? AppStrings.noCategories
-                                    : 'No se encontraron categorías',
-                                style: AppTextStyles.bodyLarge.copyWith(
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        )
-                  : isMobile
-                      ? ListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          itemCount: _filteredCategories.length,
-                          itemBuilder: (context, index) {
-                            final category = _filteredCategories[index];
-                            return _buildCategoryCard(context, category, isMobile);
-                          },
-                        )
-                      : GridView.builder(
-                          padding: const EdgeInsets.all(16),
-                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 3,
-                            crossAxisSpacing: 16,
-                            mainAxisSpacing: 16,
-                            childAspectRatio: 1.5,
-                          ),
-                          itemCount: _filteredCategories.length,
-                          itemBuilder: (context, index) {
-                            final category = _filteredCategories[index];
-                            return _buildCategoryCard(context, category, isMobile);
-                          },
+                      const SizedBox(height: 16),
+                      Text(
+                        _errorMessage!,
+                        style: AppTextStyles.bodyLarge.copyWith(
+                          color: AppColors.error,
                         ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: _loadCategories,
+                        child: const Text('Reintentar'),
+                      ),
+                    ],
+                  ),
+                )
+              : _filteredCategories.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.category,
+                        size: 64,
+                        color: AppColors.textSecondary,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        _searchController.text.isEmpty
+                            ? AppStrings.noCategories
+                            : 'No se encontraron categorías',
+                        style: AppTextStyles.bodyLarge.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : isMobile
+              ? ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: _filteredCategories.length,
+                  itemBuilder: (context, index) {
+                    final category = _filteredCategories[index];
+                    return _buildCategoryCard(context, category, isMobile);
+                  },
+                )
+              : GridView.builder(
+                  padding: const EdgeInsets.all(16),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                    childAspectRatio: 1.5,
+                  ),
+                  itemCount: _filteredCategories.length,
+                  itemBuilder: (context, index) {
+                    final category = _filteredCategories[index];
+                    return _buildCategoryCard(context, category, isMobile);
+                  },
+                ),
         ),
       ],
     );
   }
 
-  Widget _buildCategoryCard(BuildContext context, Category category, bool isMobile) {
+  Widget _buildCategoryCard(
+    BuildContext context,
+    Category category,
+    bool isMobile,
+  ) {
     return Card(
       elevation: 2,
       child: InkWell(
@@ -282,7 +291,8 @@ class _CategoriesListPageState extends State<CategoriesListPage> {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        if (category.description != null && category.description!.isNotEmpty) ...[
+                        if (category.description != null &&
+                            category.description!.isNotEmpty) ...[
                           const SizedBox(height: 4),
                           Text(
                             category.description!,
@@ -309,7 +319,9 @@ class _CategoriesListPageState extends State<CategoriesListPage> {
                       IconButton(
                         icon: const Icon(Icons.delete, size: 20),
                         color: AppColors.error,
-                        onPressed: () => category.categoryId != null ? _deleteCategory(category.categoryId!) : null,
+                        onPressed: () => category.categoryId != null
+                            ? _deleteCategory(category.categoryId!)
+                            : null,
                         tooltip: AppStrings.delete,
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(),
@@ -328,9 +340,7 @@ class _CategoriesListPageState extends State<CategoriesListPage> {
   void _navigateToCreate(BuildContext context) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const CategoryFormPage(),
-      ),
+      MaterialPageRoute(builder: (context) => const CategoryFormPage()),
     ).then((_) => _loadCategories());
   }
 
@@ -358,12 +368,14 @@ class _CategoriesListPageState extends State<CategoriesListPage> {
         Navigator.pushReplacementNamed(context, AppRoutes.sales);
         break;
       case 4:
-        Navigator.pushReplacementNamed(context, AppRoutes.reports);
+        Navigator.pushReplacementNamed(context, AppRoutes.users);
         break;
       case 5:
+        Navigator.pushReplacementNamed(context, AppRoutes.reports);
+        break;
+      case 6:
         Navigator.pushReplacementNamed(context, AppRoutes.settings);
         break;
     }
   }
 }
-

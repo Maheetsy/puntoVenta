@@ -49,19 +49,13 @@ class _LoginPageState extends State<LoginPage> {
     } on ValidationException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.message),
-            backgroundColor: AppColors.error,
-          ),
+          SnackBar(content: Text(e.message), backgroundColor: AppColors.error),
         );
       }
     } on ServerException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.message),
-            backgroundColor: AppColors.error,
-          ),
+          SnackBar(content: Text(e.message), backgroundColor: AppColors.error),
         );
       }
     } catch (e) {
@@ -90,10 +84,7 @@ class _LoginPageState extends State<LoginPage> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              AppColors.primary,
-              AppColors.primaryLight,
-            ],
+            colors: [AppColors.primary, AppColors.primaryLight],
           ),
         ),
         child: SafeArea(
@@ -116,17 +107,19 @@ class _LoginPageState extends State<LoginPage> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           // Logo/Icono
-                          Icon(
-                            Icons.point_of_sale,
-                            size: 64,
-                            color: AppColors.primary,
+                          Image.asset(
+                            'assets/images/icono.png', // <-- Asegúrate de que esta ruta sea correcta
+                            height:64, // Usa height o width, o ambos, para establecer el tamaño
+                            width: 64,
+                            fit: BoxFit.contain, // Ajusta según sea necesario
                           ),
                           const SizedBox(height: 16),
 
                           // Título
                           Text(
                             'Iniciar Sesión',
-                            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                            style: Theme.of(context).textTheme.headlineSmall
+                                ?.copyWith(
                                   fontWeight: FontWeight.bold,
                                   color: AppColors.textPrimary,
                                 ),
@@ -136,9 +129,8 @@ class _LoginPageState extends State<LoginPage> {
 
                           Text(
                             'Ingresa tus credenciales para continuar',
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  color: AppColors.textSecondary,
-                                ),
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(color: AppColors.textSecondary),
                             textAlign: TextAlign.center,
                           ),
                           const SizedBox(height: 32),
@@ -159,11 +151,14 @@ class _LoginPageState extends State<LoginPage> {
                             label: 'Contraseña',
                             controller: _passwordController,
                             obscureText: _obscurePassword,
-                            validator: (value) => Validators.required(value, 'Contraseña'),
+                            validator: (value) =>
+                                Validators.required(value, 'Contraseña'),
                             prefixIcon: const Icon(Icons.lock),
                             suffixIcon: IconButton(
                               icon: Icon(
-                                _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                                _obscurePassword
+                                    ? Icons.visibility
+                                    : Icons.visibility_off,
                               ),
                               onPressed: () {
                                 setState(() {
@@ -196,4 +191,3 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 }
-
