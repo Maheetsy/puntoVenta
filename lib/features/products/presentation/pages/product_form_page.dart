@@ -124,7 +124,10 @@ class _ProductFormPageState extends State<ProductFormPage> {
       if (widget.product == null) {
         await _productRepository.createProduct(product);
       } else {
-        await _productRepository.updateProduct(widget.product!.productId!, product);
+        await _productRepository.updateProduct(
+          widget.product!.productId!,
+          product,
+        );
       }
 
       if (mounted) {
@@ -143,19 +146,13 @@ class _ProductFormPageState extends State<ProductFormPage> {
     } on ValidationException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.message),
-            backgroundColor: AppColors.error,
-          ),
+          SnackBar(content: Text(e.message), backgroundColor: AppColors.error),
         );
       }
     } on ServerException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.message),
-            backgroundColor: AppColors.error,
-          ),
+          SnackBar(content: Text(e.message), backgroundColor: AppColors.error),
         );
       }
     } catch (e) {
@@ -256,19 +253,12 @@ class _ProductFormPageState extends State<ProductFormPage> {
                         child: CustomTextField(
                           label: AppStrings.productPrice,
                           controller: _priceController,
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                          validator: (value) => Validators.positiveNumber(value, 'Precio'),
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          validator: (value) =>
+                              Validators.positiveNumber(value, 'Precio'),
                           prefixIcon: const Icon(Icons.attach_money),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: CustomTextField(
-                          label: AppStrings.productStock,
-                          controller: _stockController,
-                          keyboardType: TextInputType.number,
-                          validator: (value) => Validators.positiveInteger(value, 'Stock'),
-                          prefixIcon: const Icon(Icons.inventory),
                         ),
                       ),
                     ],
@@ -276,7 +266,11 @@ class _ProductFormPageState extends State<ProductFormPage> {
                   const SizedBox(height: 16),
                   SwitchListTile(
                     title: const Text('Producto Activo'),
-                    subtitle: Text(_isActive ? 'El producto está activo' : 'El producto está desactivado'),
+                    subtitle: Text(
+                      _isActive
+                          ? 'El producto está activo'
+                          : 'El producto está desactivado',
+                    ),
                     value: _isActive,
                     onChanged: (value) {
                       setState(() {
@@ -300,4 +294,3 @@ class _ProductFormPageState extends State<ProductFormPage> {
     );
   }
 }
-

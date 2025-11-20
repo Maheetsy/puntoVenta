@@ -2,7 +2,8 @@ class ApiConfig {
   ApiConfig._();
 
   // URL base del API FastAPI (MySQL)
-  static const String fastApiBaseUrl = 'http://10.0.2.2:8000';
+  static const String fastApiBaseUrl =
+      'https://81mrrnd7-8000.usw3.devtunnels.ms';
 
   // URL base del API Node.js (MongoDB)
   static const String nodeApiBaseUrl =

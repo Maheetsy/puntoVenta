@@ -30,7 +30,9 @@ class ProductModel {
       productId: json['product_id'] as int?,
       name: json['name'] as String,
       description: json['description'] as String?,
-      price: (json['price'] as num).toDouble(),
+      price: (json['price'] is String)
+          ? double.parse(json['price'])
+          : (json['price'] as num).toDouble(),
       stock: json['stock'] as int,
       imagenUrl: json['imagen_url'] as String?,
       active: json['active'] as bool? ?? true,
@@ -86,4 +88,3 @@ class ProductModel {
     );
   }
 }
-
