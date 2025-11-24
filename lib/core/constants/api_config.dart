@@ -11,7 +11,7 @@ class ApiConfig {
   // Endpoints FastAPI
   static const String productsEndpoint = '/products/';
   static const String categoriesEndpoint = '/categories/';
-
+  static const String authRegisterEndpoint = '/auth/register';
   // Endpoints Node.js
   static const String authLoginEndpoint = '/api/auth/login';
   static const String authMeEndpoint = '/api/auth/me';

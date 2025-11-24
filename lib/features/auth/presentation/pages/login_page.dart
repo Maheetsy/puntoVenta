@@ -108,10 +108,10 @@ class _LoginPageState extends State<LoginPage> {
                         children: [
                           // Logo/Icono
                           Image.asset(
-                            'assets/images/icono.png', // <-- Asegúrate de que esta ruta sea correcta
-                            height:64, // Usa height o width, o ambos, para establecer el tamaño
+                            'assets/images/icono.png',
+                            height: 64,
                             width: 64,
-                            fit: BoxFit.contain, // Ajusta según sea necesario
+                            fit: BoxFit.contain,
                           ),
                           const SizedBox(height: 16),
 
@@ -120,9 +120,9 @@ class _LoginPageState extends State<LoginPage> {
                             'Iniciar Sesión',
                             style: Theme.of(context).textTheme.headlineSmall
                                 ?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.textPrimary,
-                                ),
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textPrimary,
+                            ),
                             textAlign: TextAlign.center,
                           ),
                           const SizedBox(height: 8),
@@ -177,6 +177,33 @@ class _LoginPageState extends State<LoginPage> {
                             onPressed: _login,
                             isLoading: _isLoading,
                             icon: Icons.login,
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Link para ir al registro
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                '¿No tienes cuenta? ',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(color: AppColors.textSecondary),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.pushNamed(context, AppRoutes.register);
+                                },
+                                child: Text(
+                                  'Regístrate',
+                                  style: TextStyle(
+                                    color: AppColors.primary,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),

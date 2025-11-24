@@ -8,6 +8,7 @@ import 'core/services/auth_service.dart';
 
 // --- Importa tus páginas ---
 import 'features/auth/presentation/pages/login_page.dart';
+import 'features/auth/presentation/pages/register_page.dart';
 import 'features/dashboard/presentation/pages/dashboard_page.dart';
 import 'features/products/presentation/pages/products_list_page.dart';
 import 'features/categories/presentation/pages/categories_list_page.dart';
@@ -74,6 +75,7 @@ class MyApp extends StatelessWidget {
         AppRoutes.dashboard: (context) => const DashboardPage(),
         AppRoutes.products: (context) => const ProductsListPage(),
         AppRoutes.categories: (context) => const CategoriesListPage(),
+        AppRoutes.register: (context) => const RegisterPage(),
         AppRoutes.sales: (context) => const SalesListPage(),
         AppRoutes.users: (context) => const UsersListPage(),
         AppRoutes.reports: (context) => const ReportsPage(),

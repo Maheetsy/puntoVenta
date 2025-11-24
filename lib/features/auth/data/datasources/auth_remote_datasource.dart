@@ -5,6 +5,7 @@ import '../models/user_model.dart';
 
 abstract class AuthRemoteDataSource {
   Future<Map<String, dynamic>> login(String email, String password);
+  Future<Map<String, dynamic>> register(String name, String email, String password); // <- AGREGAR ESTA LÍNEA
   Future<UserModel> getMe(String token);
 }
 
@@ -43,6 +44,39 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     }
   }
 
+  // ========== AGREGAR ESTE MÉTODO COMPLETO ==========
+  @override
+  Future<Map<String, dynamic>> register(String name, String email, String password) async {
+    try {
+      final response = await apiClient.post(
+        ApiConfig.authRegisterEndpoint, // <- Necesitas agregar este endpoint en ApiConfig
+        body: {
+          'name': name,
+          'email': email,
+          'password': password,
+        },
+      );
+
+      // El response debería tener: { success: true, token: "...", user: {...} }
+      if (response['success'] == true) {
+        return {
+          'token': response['token'] as String?,
+          'user': response['user'] as Map<String, dynamic>?,
+        };
+      } else {
+        throw ServerException(
+          message: response['message']?.toString() ?? 'Error al registrar usuario',
+        );
+      }
+    } catch (e) {
+      if (e is ServerException) {
+        rethrow;
+      }
+      throw ServerException(message: 'Error al registrar usuario: $e');
+    }
+  }
+  // ===================================================
+
   @override
   Future<UserModel> getMe(String token) async {
     try {
@@ -64,4 +98,3 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     }
   }
 }
-

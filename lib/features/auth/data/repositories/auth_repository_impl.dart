@@ -10,7 +10,7 @@ class AuthRepositoryImpl implements AuthRepository {
   AuthRepositoryImpl({required this.remoteDataSource});
 
   @override
-  Future<String> login(String email, String password) async {
+  Future<void> login(String email, String password) async {
     try {
       // Validar datos
       if (email.trim().isEmpty) {
@@ -21,18 +21,46 @@ class AuthRepositoryImpl implements AuthRepository {
       }
 
       final result = await remoteDataSource.login(email.trim(), password);
-      final token = result['token'] as String;
 
-      // Guardar token
-      await AuthService.saveToken(token);
+      // Guardar token usando AuthService
+      if (result['token'] != null) {
+        await AuthService.saveToken(result['token']);
+      }
 
-      return token;
-    } on ValidationException {
-      rethrow;
-    } on ServerException {
-      rethrow;
     } catch (e) {
-      throw ServerException(message: 'Error inesperado: $e');
+      if (e is ValidationException) {
+        rethrow;
+      }
+      throw ServerException(message: 'Error al iniciar sesión');
+    }
+  }
+
+  @override
+  Future<void> register(String name, String email, String password) async {
+    try {
+      // Validar datos
+      if (email.trim().isEmpty) {
+        throw ValidationException(message: 'El email es requerido');
+      }
+      if (password.isEmpty) {
+        throw ValidationException(message: 'La contraseña es requerida');
+      }
+      if (name.trim().isEmpty) {
+        throw ValidationException(message: 'El nombre es requerido');
+      }
+
+      final result = await remoteDataSource.register(name.trim(), email.trim(), password);
+
+      // Guardar token si lo devuelve (usando AuthService)
+      if (result['token'] != null) {
+        await AuthService.saveToken(result['token']);
+      }
+
+    } catch (e) {
+      if (e is ValidationException) {
+        rethrow;
+      }
+      throw ServerException(message: 'Error al registrar usuario');
     }
   }
 
@@ -44,6 +72,11 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<bool> isAuthenticated() async {
     return await AuthService.isAuthenticated();
+  }
+
+  @override
+  Future<String?> getToken() async {
+    return await AuthService.getToken();
   }
 
   @override
@@ -66,4 +99,3 @@ class AuthRepositoryImpl implements AuthRepository {
     }
   }
 }
-
