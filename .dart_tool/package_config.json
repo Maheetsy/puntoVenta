@@ -98,6 +98,12 @@
       "languageVersion": "3.8"
     },
     {
+      "name": "get_it",
+      "rootUri": "file:///C:/Users/daive/AppData/Local/Pub/Cache/hosted/pub.dev/get_it-7.7.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.0"
+    },
+    {
       "name": "google_fonts",
       "rootUri": "file:///C:/Users/daive/AppData/Local/Pub/Cache/hosted/pub.dev/google_fonts-6.3.2",
       "packageUri": "lib/",

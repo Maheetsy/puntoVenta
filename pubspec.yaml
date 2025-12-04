@@ -40,6 +40,7 @@ dependencies:
   intl: ^0.19.0
   http: ^1.2.0
   google_generative_ai: ^0.2.3 # Para la conexión con Gemini
+  get_it: ^7.7.0 
 
 fonts:
   - family: Inter
