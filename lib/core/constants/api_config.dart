@@ -3,7 +3,7 @@ class ApiConfig {
 
   // URL base del API FastAPI (MySQL)
   static const String fastApiBaseUrl =
-      'https://81mrrnd7-8000.usw3.devtunnels.ms';
+      'https://backendfastapi-jftv.onrender.com/';
 
   // URL base del API Node.js (MongoDB)
   static const String nodeApiBaseUrl =
