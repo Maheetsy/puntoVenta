@@ -16,7 +16,7 @@ import 'features/sales/presentation/pages/sales_list_page.dart';
 import 'features/users/presentation/pages/users_list_page.dart';
 import 'features/reports/presentation/pages/reports_page.dart';
 import 'features/configuration/presentation/pages/configuration_page.dart';
-
+import 'features/chatbot/presentation/pages/chatbot_page.dart';
 // --- Importa el nuevo ThemeManager ---
 import 'core/theme/theme_manager.dart';
 
@@ -80,6 +80,7 @@ class MyApp extends StatelessWidget {
         AppRoutes.users: (context) => const UsersListPage(),
         AppRoutes.reports: (context) => const ReportsPage(),
         AppRoutes.settings: (context) => const ConfigurationPage(),
+        '/chatbot': (context) => const ChatBotPage(),
       },
     );
   }
