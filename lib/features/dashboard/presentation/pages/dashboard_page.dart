@@ -11,11 +11,25 @@ class DashboardPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ResponsiveLayout(
-      currentIndex: 0,
-      onNavTap: (index) => _navigateToPage(context, index),
-      title: AppStrings.dashboardTitle,
-      body: _buildBody(context),
+    // 1. Envuelve el ResponsiveLayout en un Scaffold para añadir el FloatingActionButton
+    return Scaffold(
+      body: ResponsiveLayout(
+        currentIndex: 0,
+        onNavTap: (index) => _navigateToPage(context, index),
+        title: AppStrings.dashboardTitle,
+        body: _buildBody(context),
+      ),
+
+      // 2. Implementación del FloatingActionButton para el Chatbot
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          // Navega a la ruta /chatbot que se registró en main.dart
+          Navigator.of(context).pushNamed('/chatbot');
+        },
+        tooltip: 'Abrir Asistente de IA',
+        backgroundColor: AppColors.primary,
+        child: const Icon(Icons.assistant, color: Colors.white),
+      ),
     );
   }
 
@@ -334,12 +348,12 @@ class DashboardPage extends StatelessWidget {
   }
 
   Widget _buildStatCard(
-    BuildContext context, {
-    required String title,
-    required String value,
-    required IconData icon,
-    required Color color,
-  }) {
+      BuildContext context, {
+        required String title,
+        required String value,
+        required IconData icon,
+        required Color color,
+      }) {
     return Card(
       elevation: 2,
       child: Padding(
@@ -452,48 +466,39 @@ class DashboardPage extends StatelessWidget {
     );
   }
 
-  // --- ⬇️ AQUÍ ESTÁ LA FUNCIÓN ACTUALIZADA ⬇️ ---
+  // Función de navegación que estaba incompleta, ahora completa.
   void _navigateToPage(BuildContext context, int index) {
-    // Obtenemos la ruta actual para no recargar la misma página
     final currentRoute = ModalRoute.of(context)?.settings.name;
 
+    String targetRoute;
     switch (index) {
       case 0:
-        if (currentRoute != AppRoutes.dashboard) {
-          Navigator.pushReplacementNamed(context, AppRoutes.dashboard);
-        }
+        targetRoute = AppRoutes.dashboard;
         break;
       case 1:
-        if (currentRoute != AppRoutes.products) {
-          Navigator.pushReplacementNamed(context, AppRoutes.products);
-        }
+        targetRoute = AppRoutes.products;
         break;
       case 2:
-        if (currentRoute != AppRoutes.categories) {
-          Navigator.pushReplacementNamed(context, AppRoutes.categories);
-        }
+        targetRoute = AppRoutes.categories;
         break;
       case 3:
-        if (currentRoute != AppRoutes.sales) {
-          Navigator.pushReplacementNamed(context, AppRoutes.sales);
-        }
+        targetRoute = AppRoutes.sales;
         break;
       case 4:
-        if (currentRoute != AppRoutes.users) {
-          Navigator.pushReplacementNamed(context, AppRoutes.users);
-        }
+        targetRoute = AppRoutes.users;
         break;
       case 5:
-        if (currentRoute != AppRoutes.reports) {
-          Navigator.pushReplacementNamed(context, AppRoutes.reports);
-        }
+        targetRoute = AppRoutes.reports;
         break;
       case 6:
-        if (currentRoute != AppRoutes.settings) {
-          Navigator.pushReplacementNamed(context, AppRoutes.settings);
-        }
+        targetRoute = AppRoutes.settings;
         break;
-      // ----------------------------------------
+      default:
+        return;
+    }
+
+    if (currentRoute != targetRoute) {
+      Navigator.pushReplacementNamed(context, targetRoute);
     }
   }
 }
